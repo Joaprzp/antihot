@@ -37,7 +37,7 @@ Cualquier consumidor argentino que compre en ecommerce durante el HotSale.
 
 ## Stack
 
-Mismo stack estándar de Bllob: Bun + React 19 + Vite + Convex + TanStack Router + Tailwind 4 + Shadcn. Scraping con Playwright en Railway VPS, cron job nativo de Railway o Convex scheduled functions. Claude API para extracción de selectores (precio y título) desde el HTML crudo.
+Bun + React 19 + Vite 8 + Convex + TanStack Router + Tailwind 4 + Radix UI. Scraping con Playwright en Railway VPS (Hono server, Docker), cron jobs en Convex scheduled functions. Claude Sonnet via Anthropic API para extracción de selectores CSS (precio y título) desde el HTML crudo.
 
 ---
 

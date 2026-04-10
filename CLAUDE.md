@@ -1,5 +1,7 @@
 # CLAUDE.md — AntiHot
 
+> **Further reading:** [`PRD.md`](PRD.md) for full product requirements, scraping strategy, and risk analysis. [`STACK.md`](STACK.md) for the complete tech stack table, architecture rules, Icon wrapper code, and localization details.
+
 ## What is AntiHot
 
 A web app that tracks Argentine ecommerce product prices **before** and **during** HotSale to expose fake discounts. Users paste product URLs, the app scrapes price + title, and a cron job re-scrapes on HotSale night. The dashboard shows the delta: price went down, up, or stayed the same.

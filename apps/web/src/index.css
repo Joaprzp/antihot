@@ -1,0 +1,16 @@
+@import "tailwindcss";
+@import "@fontsource-variable/playfair-display/index.css";
+@import "@fontsource-variable/source-sans-3/index.css";
+@import "@fontsource-variable/geist-mono/index.css";
+
+@theme inline {
+  --font-heading: "Playfair Display Variable", serif;
+  --font-body: "Source Sans 3 Variable", sans-serif;
+  --font-mono: "Geist Mono Variable", monospace;
+}
+
+body {
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

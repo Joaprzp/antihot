@@ -18,6 +18,26 @@ React 19 + Vite 8 + TSR  ──────►  Convex functions + DB  ◄──
 - **Scraper service** — Hono server on Railway. Playwright (Chromium headless) fetches pages. Claude Sonnet extracts CSS selectors for price and title from raw HTML. Auto-heals broken selectors by re-calling Claude.
 - **Notifications** — Telegram Bot API (direct HTTP, HTML parse mode).
 
+### Monorepo structure
+
+```
+antihot/
+├── apps/
+│   └── web/              # Frontend + Convex backend
+│       ├── convex/       # Convex functions, schema, crons
+│       └── src/
+│           ├── Routes/   # TanStack Router file-based routes
+│           ├── Dashboard/
+│           ├── Landing/
+│           ├── Auth/
+│           └── Shared/   # cn(), Icon wrapper, shared UI
+├── packages/
+│   └── shared/           # Shared types between web and scraper
+└── apps/scraper/         # Phase 2 — Hono + Playwright
+```
+
+> **Convex guidelines:** See [`apps/web/CLAUDE.md`](apps/web/CLAUDE.md) — always read `convex/_generated/ai/guidelines.md` before writing Convex code.
+
 ## User flow
 
 1. Sign in with Google (Convex Auth).

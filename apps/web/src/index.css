@@ -7,10 +7,27 @@
   --font-heading: "Playfair Display Variable", serif;
   --font-body: "Source Sans 3 Variable", sans-serif;
   --font-mono: "Geist Mono Variable", monospace;
+  --color-accent: oklch(0.55 0.22 27);
+  --color-accent-light: oklch(0.55 0.22 27 / 0.1);
+  --color-accent-hover: oklch(0.48 0.2 27);
+  --color-surface: oklch(0.985 0.002 90);
+  --color-surface-raised: oklch(1 0 0);
+  --color-text-primary: oklch(0.2 0.02 30);
+  --color-text-secondary: oklch(0.45 0.02 30);
+  --color-text-muted: oklch(0.6 0.01 30);
+  --color-border: oklch(0.88 0.01 80);
+  --color-green: oklch(0.55 0.18 155);
+  --color-green-light: oklch(0.55 0.18 155 / 0.1);
+  --color-red: oklch(0.55 0.22 27);
+  --color-red-light: oklch(0.55 0.22 27 / 0.1);
+  --color-neutral: oklch(0.55 0.01 80);
+  --color-neutral-light: oklch(0.55 0.01 80 / 0.1);
 }
 
 body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
 }

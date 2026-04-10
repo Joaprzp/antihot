@@ -61,8 +61,9 @@ antihot/
 
 ### Styling
 - **Tailwind 4** with **OKLCH** for all custom colors. Never hex or HSL.
-- **Semantic CSS custom properties** (`--th-*`) mapped via `@theme inline` to Tailwind utilities (`bg-surface-raised`, `text-text-primary`). Never hardcoded `text-white` or `bg-white` in dashboard code.
-- Landing page is exempt from theme tokens (always light, raw Tailwind classes).
+- **Global design tokens** defined in `index.css` via `@theme inline` — `accent`, `surface`, `surface-raised`, `text-primary`, `text-secondary`, `text-muted`, `border`, `green`, `red`, `neutral` (with `-light` variants). Use these everywhere.
+- **Accent color** — burnt red `oklch(0.55 0.22 27)`.
+- **Landing page** — single viewport, no scroll (`h-screen overflow-hidden`). Always light theme.
 - **One accent color per view**.
 - **CVA** for component variants. **`cn()`** (clsx + tailwind-merge) for conditional classes.
 

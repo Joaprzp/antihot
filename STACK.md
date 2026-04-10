@@ -33,7 +33,9 @@
 - **Zustand** for global app state (auth session, current user, etc.)
 - **TSR search params + Zod** for all URL-driven state (filters, pagination, tabs) — not Zustand
 - **Colors in OKLCH** — use `oklch()` for all custom color definitions. Tailwind 4 uses OKLCH natively. Never hex or HSL.
-- **Theme-aware colors** — dashboard uses semantic CSS custom properties (`--th-*`) mapped via `@theme inline` to Tailwind utilities (`bg-surface-raised`, `text-text-primary`, etc.). Never use hardcoded `text-white` or `bg-white/[0.0x]` in dashboard code — use the semantic tokens. Landing page is exempt (always light, uses raw Tailwind classes).
+- **Global design tokens** — defined in `apps/web/src/index.css` via `@theme inline`: `accent`, `surface`, `surface-raised`, `text-primary`, `text-secondary`, `text-muted`, `border`, `green`, `red`, `neutral` (with `-light` variants). Use these everywhere — never hardcode `text-white` or `bg-white/[0.0x]`.
+- **Accent color** — burnt red `oklch(0.55 0.22 27)`.
+- **Landing page** — single viewport, no scroll (`h-screen overflow-hidden`). Always light theme.
 - **One accent color per view** rule
 - **Radix UI** for accessible interactive primitives (dialogs, popovers, tooltips, dropdowns). No component library — build purpose-built components for the domain.
 - **CVA** for component variants. `cn()` (clsx + twMerge) for conditional classes.

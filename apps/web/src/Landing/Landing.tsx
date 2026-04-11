@@ -1,4 +1,19 @@
+import { useAuthActions } from "@convex-dev/auth/react";
+import { useConvexAuth } from "convex/react";
+import { useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+
 export function Landing() {
+  const { signIn } = useAuthActions();
+  const { isAuthenticated } = useConvexAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate({ to: "/dashboard" });
+    }
+  }, [isAuthenticated, navigate]);
+
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[#F5F5F5] font-nothing">
       {/* Nav */}
@@ -24,7 +39,10 @@ export function Landing() {
               descuento es posta.
             </p>
             <div className="mt-10">
-              <button className="font-nothing-mono inline-flex h-11 items-center gap-2.5 rounded-full bg-[#000000] px-6 text-[13px] uppercase tracking-[0.06em] text-[#F5F5F5] transition-colors duration-200 hover:bg-[#1A1A1A]">
+              <button
+                onClick={() => void signIn("google")}
+                className="font-nothing-mono inline-flex h-11 items-center gap-2.5 rounded-full bg-[#000000] px-6 text-[13px] uppercase tracking-[0.06em] text-[#F5F5F5] transition-colors duration-200 hover:bg-[#1A1A1A]"
+              >
                 <GoogleIcon />
                 EMPEZAR
               </button>

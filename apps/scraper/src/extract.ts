@@ -21,8 +21,8 @@ export async function extractSelectors(
 ): Promise<Selectors> {
   const modelId =
     model === "haiku"
-      ? "claude-haiku-4-5-20251001"
-      : "claude-sonnet-4-6-20250514";
+      ? "claude-haiku-3-5-20241022"
+      : "claude-sonnet-4-5-20250414";
 
   const response = await anthropic.messages.create({
     model: modelId,

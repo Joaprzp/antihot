@@ -1,10 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useQuery, useMutation } from "convex/react";
 import { useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Icon } from "@/Shared/Icon";
 import { Link01Icon } from "@hugeicons/core-free-icons";
+
+function useDelayedLoading(isLoading: boolean, delayMs = 300) {
+  const [show, setShow] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout>>(null);
+
+  useEffect(() => {
+    if (isLoading) {
+      timer.current = setTimeout(() => setShow(true), delayMs);
+    } else {
+      if (timer.current) clearTimeout(timer.current);
+      setShow(false);
+    }
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, [isLoading, delayMs]);
+
+  return show;
+}
 
 type SortField = "price" | "date";
 type SortOrder = "asc" | "desc";
@@ -92,7 +111,9 @@ export function Dashboard() {
     return (a._creationTime - b._creationTime) * dir;
   });
 
-  const isLoadingProducts = isAuthenticated && products === undefined;
+  const isLoadingProducts = useDelayedLoading(
+    isAuthenticated && products === undefined,
+  );
   const productCount = products?.length ?? 0;
 
   if (authLoading) {
@@ -175,9 +196,15 @@ export function Dashboard() {
       <main className="mx-auto w-full max-w-6xl flex-1 px-6 pt-2 pb-8">
         {isLoadingProducts ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="animate-fade-in"
+                style={{ animationDelay: `${i * 150}ms` }}
+              >
+                <SkeletonCard />
+              </div>
+            ))}
           </div>
         ) : sorted.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24">

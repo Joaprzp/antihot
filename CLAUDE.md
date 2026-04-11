@@ -1,6 +1,6 @@
 # CLAUDE.md — AntiHot
 
-> **Further reading:** [`PRD.md`](PRD.md) for full product requirements, scraping strategy, and risk analysis. [`STACK.md`](STACK.md) for the complete tech stack table, architecture rules, Icon wrapper code, and localization details.
+> **Further reading:** [`PRD.md`](PRD.md) for full product requirements, scraping strategy, and risk analysis. [`STACK.md`](STACK.md) for the complete tech stack table, architecture rules, Icon wrapper code, and localization details. [`STATUS.md`](STATUS.md) for what's done, in progress, and next.
 
 ## What is AntiHot
 
@@ -15,7 +15,7 @@ React 19 + Vite 8 + TSR  ──────►  Convex functions + DB  ◄──
 
 - **Frontend** — React 19, Vite 8, TanStack Router v1, Tailwind 4, Zustand, deployed on Cloudflare Pages.
 - **Backend / DB** — Convex (functions, schema, crons, auth). Convex Auth with Google OAuth.
-- **Scraper service** — Hono server on Railway. Playwright (Chromium headless) fetches pages. Claude Sonnet extracts CSS selectors for price and title from raw HTML. Auto-heals broken selectors by re-calling Claude.
+- **Scraper service** — Hono server on Railway. Playwright (Chromium headless) fetches pages. Claude Haiku extracts CSS selectors for price and title from raw HTML (cached per domain, shared across users). Auto-heals broken selectors by escalating to Claude Sonnet.
 - **Notifications** — Telegram Bot API (direct HTTP, HTML parse mode).
 
 ### Monorepo structure
@@ -42,10 +42,18 @@ antihot/
 
 1. Sign in with Google (Convex Auth).
 2. Paste a product URL (MercadoLibre, Fravega, Naldo, etc.).
-3. Scraper extracts title + price via Playwright + Claude selector extraction → snapshot saved in Convex.
-4. Product appears in dashboard with name, price, date.
-5. Cron re-scrapes all products on HotSale night.
-6. Dashboard shows delta: ✅ bajó / ⚠️ subió / ➖ igual.
+3. Scraper checks domain selector cache → if miss, Playwright fetches HTML → Claude Haiku extracts selectors → cached per domain for all users.
+4. Selectors used to extract title + price → snapshot saved in Convex.
+5. Product appears in dashboard with name, price, date.
+6. Cron re-scrapes all products on HotSale night using cached selectors. If selector fails, escalate to Claude Sonnet (auto-heal) and update cache.
+7. Dashboard shows delta: ✅ bajó / ⚠️ subió / ➖ igual.
+
+### Scraping cost model
+
+- **First scrape per domain:** 1 Haiku call (extract selectors, cache for all users on that domain).
+- **Subsequent scrapes (same domain):** 0 Claude calls (use cached selectors).
+- **Auto-healing (selector broke):** 1 Sonnet call (re-extract, update cache).
+- Cost scales by number of **unique stores**, not by number of users or products.
 
 ## Code conventions
 
@@ -94,12 +102,13 @@ antihot/
 
 ## MVP scope
 
-**In scope:** Google auth, URL submission, Playwright + Claude scraping, price snapshot storage, HotSale cron re-scrape, before/during price delta display.
+**In scope:** Google auth, URL submission, Playwright + Claude scraping, domain-level selector cache, price snapshot storage, HotSale cron re-scrape, before/during price delta display.
 
 **Out of scope:** Price history beyond two dates, push/email alerts, cross-store comparison, mobile native app.
 
 ## Key risks to keep in mind
 
 - Scraper blocking → mitigate with realistic User-Agent and request delays.
-- Selector breakage → Claude auto-healing.
+- Selector breakage → Haiku→Sonnet auto-healing escalation + domain cache update.
 - Cron failure on HotSale night = total loss of value for that cycle.
+- Domain cache assumes one selector pattern per store. MercadoLibre may need path-pattern keying if layouts vary by seller type.

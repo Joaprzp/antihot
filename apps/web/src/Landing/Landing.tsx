@@ -5,7 +5,7 @@ import { useEffect } from "react";
 
 export function Landing() {
   const { signIn } = useAuthActions();
-  const { isAuthenticated } = useConvexAuth();
+  const { isAuthenticated, isLoading } = useConvexAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -41,10 +41,17 @@ export function Landing() {
             <div className="mt-10">
               <button
                 onClick={() => void signIn("google")}
-                className="font-nothing-mono inline-flex h-11 items-center gap-2.5 rounded-full bg-[#000000] px-6 text-[13px] uppercase tracking-[0.06em] text-[#F5F5F5] transition-colors duration-200 hover:bg-[#1A1A1A]"
+                disabled={isLoading}
+                className="font-nothing-mono inline-flex h-11 items-center gap-2.5 rounded-full bg-[#000000] px-6 text-[13px] uppercase tracking-[0.06em] text-[#F5F5F5] transition-colors duration-200 hover:bg-[#1A1A1A] disabled:opacity-40"
               >
-                <GoogleIcon />
-                EMPEZAR
+                {isLoading ? (
+                  "CARGANDO..."
+                ) : (
+                  <>
+                    <GoogleIcon />
+                    EMPEZAR
+                  </>
+                )}
               </button>
             </div>
           </div>

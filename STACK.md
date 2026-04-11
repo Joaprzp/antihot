@@ -21,7 +21,7 @@
 | Scraper HTTP | Hono |
 | Browser Automation | Playwright (Chromium headless) |
 | Notifications | Telegram Bot API (direct HTTP) |
-| AI (selector extraction + auto-heal) | Claude Sonnet via Anthropic API |
+| AI (selector extraction) | Claude Haiku via Anthropic API (Sonnet fallback for auto-heal) |
 | Web Hosting | Cloudflare Pages |
 | Scraper Hosting | Railway (Docker) |
 

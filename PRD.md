@@ -37,16 +37,19 @@ Cualquier consumidor argentino que compre en ecommerce durante el HotSale.
 
 ## Stack
 
-Bun + React 19 + Vite 8 + Convex + TanStack Router + Tailwind 4 + Radix UI. Scraping con Playwright en Railway VPS (Hono server, Docker), cron jobs en Convex scheduled functions. Claude Sonnet via Anthropic API para extracción de selectores CSS (precio y título) desde el HTML crudo.
+Bun + React 19 + Vite 8 + Convex + TanStack Router + Tailwind 4 + Radix UI. Scraping con Playwright en Railway VPS (Hono server, Docker), cron jobs en Convex scheduled functions. Claude Haiku via Anthropic API para extracción de selectores CSS (precio y título) desde el HTML crudo, con fallback a Claude Sonnet para auto-healing.
 
 ---
 
 ## Scraping — estrategia
 
 1. Playwright fetchea el HTML de la URL pegada por el usuario.
-2. Se envía el HTML a Claude con el prompt: *"Identificá el selector CSS más estable para el precio del producto y para el título. Explicá por qué es estable."*
-3. Se persiste el selector junto con el producto en Convex.
-4. En el re-scrape del HotSale se reutiliza ese selector; si falla, se llama a Claude de nuevo con el nuevo HTML (auto-healing).
+2. Se busca en el cache de selectores por dominio. Si hay selectores cacheados para ese dominio, se usan directamente (sin llamada a Claude).
+3. Si no hay cache, se envía el HTML a Claude Haiku con el prompt: *"Identificá el selector CSS más estable para el precio del producto y para el título."*
+4. Se persisten los selectores en el cache a nivel dominio (un solo set de selectores por tienda, compartido entre todos los usuarios).
+5. En el re-scrape del HotSale se reutilizan los selectores cacheados. Si fallan, se escala a Claude Sonnet para auto-healing con el nuevo HTML y se actualiza el cache.
+
+**Modelo de costos:** Haiku por defecto (~10x más barato que Sonnet). Sonnet solo como fallback para auto-healing. Con cache por dominio, el costo escala por cantidad de tiendas, no por cantidad de usuarios.
 
 ---
 

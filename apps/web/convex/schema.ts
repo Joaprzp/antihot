@@ -10,12 +10,6 @@ export default defineSchema({
     url: v.string(),
     store: v.string(),
     title: v.optional(v.string()),
-    selectors: v.optional(
-      v.object({
-        price: v.string(),
-        title: v.string(),
-      }),
-    ),
     status: v.union(
       v.literal("pending"),
       v.literal("scraped"),
@@ -33,4 +27,13 @@ export default defineSchema({
   })
     .index("by_productId", ["productId"])
     .index("by_productId_and_phase", ["productId", "phase"]),
+
+  selectorsCache: defineTable({
+    domain: v.string(),
+    selectors: v.object({
+      price: v.string(),
+      title: v.string(),
+    }),
+    lastVerified: v.number(),
+  }).index("by_domain", ["domain"]),
 });

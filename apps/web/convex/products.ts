@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const list = query({
@@ -57,8 +58,15 @@ export const add = mutation({
       url: args.url,
       store,
       title: undefined,
-      selectors: undefined,
       status: "pending",
+    });
+
+    // Schedule scraping in background
+    await ctx.scheduler.runAfter(0, internal.scrapeAction.scrapeProduct, {
+      productId,
+      url: args.url,
+      store,
+      phase: "before",
     });
 
     return productId;

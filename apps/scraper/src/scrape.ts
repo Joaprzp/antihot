@@ -90,21 +90,28 @@ export async function scrape(
     // Get page HTML for Claude
     const html = await page.content();
 
+    console.log(`Page HTML length: ${html.length}, URL: ${url}`);
+
     // Try Haiku first
     try {
       const selectors = await extractSelectors(html, "haiku");
+      console.log("Haiku selectors:", JSON.stringify(selectors));
       const result = await extractWithSelectors(page, selectors);
       if (result) {
+        console.log("Haiku extraction succeeded:", result.title, result.price);
         return { ...result, selectors, selectorsSource: "haiku" };
       }
+      console.log("Haiku selectors returned but didn't match any elements on page");
     } catch (error) {
       console.log("Haiku extraction failed, trying Sonnet:", error);
     }
 
     // Fallback to Sonnet
     const selectors = await extractSelectors(html, "sonnet");
+    console.log("Sonnet selectors:", JSON.stringify(selectors));
     const result = await extractWithSelectors(page, selectors);
     if (!result) {
+      console.log("Sonnet selectors also didn't match. Page title:", await page.title());
       throw new Error(
         "Failed to extract price/title even with Sonnet selectors",
       );

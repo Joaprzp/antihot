@@ -13,6 +13,8 @@
         "@fontsource-variable/geist-mono": "^5.2.7",
         "@fontsource-variable/playfair-display": "^5.2.8",
         "@fontsource-variable/source-sans-3": "^5.2.9",
+        "@fontsource-variable/space-grotesk": "^5.2.10",
+        "@fontsource/space-mono": "^5.2.9",
         "@hugeicons/core-free-icons": "^4.1.1",
         "@hugeicons/react": "^1.1.6",
         "@radix-ui/react-dialog": "^1.1.15",
@@ -187,6 +189,10 @@
     "@fontsource-variable/playfair-display": ["@fontsource-variable/playfair-display@5.2.8", "", {}, "sha512-ZzVIXPOrL85yyOvZYoBzUszIJM+xKkHqni4IYn2CVLaGQQdJR8sBeC8yFNgjxSJ7ludTwta8qpULeOFuk5X75A=="],
 
     "@fontsource-variable/source-sans-3": ["@fontsource-variable/source-sans-3@5.2.9", "", {}, "sha512-K9fkQbb0BNnRmmaU+Gpr6U4IaYKpNzA8t07J6aam2i+6v84RT72MVpar8OBr3yYAEznj4riKivPQ2nAF2fPKsw=="],
+
+    "@fontsource-variable/space-grotesk": ["@fontsource-variable/space-grotesk@5.2.10", "", {}, "sha512-yJQO/o35/hAP3CFnpdFTwQku2yzJOae2HIpBmqkOVoxhhXJaQP3g+b6Jrz7u+eI7A5ZdCIf88uMWpBJdFiGr5w=="],
+
+    "@fontsource/space-mono": ["@fontsource/space-mono@5.2.9", "", {}, "sha512-b61faFOHEISQ/pD25G+cfGY9o/WW6lRv6hBQQfpWvEJ4y1V+S4gmth95EVyBE2VL3qDYHeVQ8nBzrplzdXTDDg=="],
 
     "@hugeicons/core-free-icons": ["@hugeicons/core-free-icons@4.1.1", "", {}, "sha512-teqIBvPHl90ygIwKyJwTxOH8aNp1X1PjDTcMvLkEwdPxPD+8mssrZ5kXKIAJJFYPsz69a8LYQY0UPid4PAdavg=="],
 

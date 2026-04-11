@@ -2,11 +2,25 @@
 @import "@fontsource-variable/playfair-display/index.css";
 @import "@fontsource-variable/source-sans-3/index.css";
 @import "@fontsource-variable/geist-mono/index.css";
+@import "@fontsource-variable/space-grotesk/index.css";
+@import "@fontsource/space-mono/400.css";
+@import "@fontsource/space-mono/700.css";
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@utility animate-fade-in {
+  animation: fade-in 250ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
 
 @theme inline {
   --font-heading: "Playfair Display Variable", serif;
   --font-body: "Source Sans 3 Variable", sans-serif;
   --font-mono: "Geist Mono Variable", monospace;
+  --font-nothing: "Space Grotesk Variable", "DM Sans", system-ui, sans-serif;
+  --font-nothing-mono: "Space Mono", "JetBrains Mono", monospace;
   --color-accent: oklch(0.55 0.22 27);
   --color-accent-light: oklch(0.55 0.22 27 / 0.1);
   --color-accent-hover: oklch(0.48 0.2 27);

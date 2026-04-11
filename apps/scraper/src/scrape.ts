@@ -11,11 +11,10 @@ type ScrapeResult = {
 };
 
 function parsePrice(text: string): number {
-  // Argentine price formats: $849.999 or $849,999 or $ 849.999,00
   const cleaned = text
-    .replace(/[^0-9.,]/g, "") // keep digits, dots, commas
-    .replace(/\.(?=\d{3})/g, "") // remove thousand separators (dots before 3 digits)
-    .replace(",", "."); // convert decimal comma to dot
+    .replace(/[^0-9.,]/g, "")
+    .replace(/\.(?=\d{3})/g, "")
+    .replace(",", ".");
 
   const price = parseFloat(cleaned);
   if (isNaN(price) || price <= 0) {
@@ -24,54 +23,36 @@ function parsePrice(text: string): number {
   return price;
 }
 
-async function extractFromJsonLd(
-  page: Page,
-): Promise<{ title: string; price: number } | null> {
-  try {
-    const jsonLdData = await page.evaluate(() => {
-      const scripts = document.querySelectorAll(
-        'script[type="application/ld+json"]',
-      );
-      for (const script of scripts) {
-        try {
-          const data = JSON.parse(script.textContent ?? "");
-          // Handle single product or array of schemas
-          const items = Array.isArray(data) ? data : [data];
-          for (const item of items) {
-            if (item["@type"] === "Product" && item.name && item.offers) {
-              const offers = Array.isArray(item.offers)
-                ? item.offers
-                : [item.offers];
-              const offer = offers.find(
-                (o: Record<string, unknown>) => o.price || o.lowPrice,
-              );
-              if (offer) {
-                return {
-                  title: item.name as string,
-                  price: parseFloat(
-                    String(offer.price ?? offer.lowPrice),
-                  ),
-                };
-              }
+function extractJsonLdFromHtml(
+  html: string,
+): { title: string; price: number } | null {
+  const regex = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+  let match;
+  while ((match = regex.exec(html)) !== null) {
+    try {
+      const data = JSON.parse(match[1]);
+      const items = Array.isArray(data) ? data : [data];
+      for (const item of items) {
+        if (item["@type"] === "Product" && item.name && item.offers) {
+          const offers = Array.isArray(item.offers)
+            ? item.offers
+            : [item.offers];
+          const offer = offers.find(
+            (o: Record<string, unknown>) => o.price || o.lowPrice,
+          );
+          if (offer) {
+            const price = parseFloat(String(offer.price ?? offer.lowPrice));
+            if (price > 0) {
+              return { title: item.name, price };
             }
           }
-        } catch {
-          continue;
         }
       }
-      return null;
-    });
-
-    if (jsonLdData && jsonLdData.title && jsonLdData.price > 0) {
-      console.log(
-        `JSON-LD extraction succeeded: "${jsonLdData.title}" @ ${jsonLdData.price}`,
-      );
-      return jsonLdData;
+    } catch {
+      continue;
     }
-    return null;
-  } catch {
-    return null;
   }
+  return null;
 }
 
 async function extractWithSelectors(
@@ -106,6 +87,34 @@ export async function scrape(
   url: string,
   cachedSelectors: Selectors | null,
 ): Promise<ScrapeResult> {
+  // 1. Fast path: try plain HTTP fetch + JSON-LD (no Playwright needed)
+  try {
+    console.log(`Trying fast JSON-LD extraction for ${url}`);
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+        "Accept-Language": "es-AR,es;q=0.9",
+      },
+    });
+    const html = await response.text();
+    const jsonLdResult = extractJsonLdFromHtml(html);
+    if (jsonLdResult) {
+      console.log(
+        `Fast JSON-LD succeeded: "${jsonLdResult.title}" @ ${jsonLdResult.price}`,
+      );
+      return {
+        ...jsonLdResult,
+        selectors: { price: "jsonld", title: "jsonld" },
+        selectorsSource: "jsonld",
+      };
+    }
+    console.log("No JSON-LD in static HTML, falling back to Playwright");
+  } catch (error) {
+    console.log("Fast fetch failed, falling back to Playwright:", error);
+  }
+
+  // 2. Slow path: Playwright for JS-rendered pages
   const browser = await chromium.launch({
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
@@ -119,21 +128,24 @@ export async function scrape(
     });
 
     const page = await context.newPage();
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-    await page.waitForTimeout(2000);
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
+    await page.waitForTimeout(1500);
 
-    // 1. Try JSON-LD structured data first (free, fast, most reliable)
-    const jsonLdResult = await extractFromJsonLd(page);
+    // Try JSON-LD from rendered page (some sites inject it via JS)
+    const renderedHtml = await page.content();
+    const jsonLdResult = extractJsonLdFromHtml(renderedHtml);
     if (jsonLdResult) {
+      console.log(
+        `Playwright JSON-LD succeeded: "${jsonLdResult.title}" @ ${jsonLdResult.price}`,
+      );
       return {
         ...jsonLdResult,
         selectors: { price: "jsonld", title: "jsonld" },
         selectorsSource: "jsonld",
       };
     }
-    console.log("No JSON-LD Product data found, trying CSS selectors");
 
-    // 2. Try cached CSS selectors
+    // Try cached CSS selectors
     if (cachedSelectors && cachedSelectors.price !== "jsonld") {
       const result = await extractWithSelectors(page, cachedSelectors);
       if (result) {
@@ -143,39 +155,31 @@ export async function scrape(
           selectorsSource: "cache",
         };
       }
-      console.log(`Cached selectors failed for ${url}, extracting new ones`);
+      console.log(`Cached selectors failed for ${url}`);
     }
 
-    // 3. Get page HTML for Claude
-    const html = await page.content();
-    console.log(`Page HTML length: ${html.length}, URL: ${url}`);
-
-    // 4. Try Haiku
+    // Claude Haiku
+    console.log(`Page HTML length: ${renderedHtml.length}, URL: ${url}`);
     try {
-      const selectors = await extractSelectors(html, "haiku");
+      const selectors = await extractSelectors(renderedHtml, "haiku");
       console.log("Haiku selectors:", JSON.stringify(selectors));
       const result = await extractWithSelectors(page, selectors);
       if (result) {
-        console.log("Haiku extraction succeeded:", result.title, result.price);
+        console.log("Haiku succeeded:", result.title, result.price);
         return { ...result, selectors, selectorsSource: "haiku" };
       }
-      console.log("Haiku selectors didn't match any elements on page");
+      console.log("Haiku selectors didn't match");
     } catch (error) {
-      console.log("Haiku extraction failed, trying Sonnet:", error);
+      console.log("Haiku failed, trying Sonnet:", error);
     }
 
-    // 5. Fallback to Sonnet
-    const selectors = await extractSelectors(html, "sonnet");
+    // Claude Sonnet fallback
+    const selectors = await extractSelectors(renderedHtml, "sonnet");
     console.log("Sonnet selectors:", JSON.stringify(selectors));
     const result = await extractWithSelectors(page, selectors);
     if (!result) {
-      console.log(
-        "Sonnet selectors also didn't match. Page title:",
-        await page.title(),
-      );
-      throw new Error(
-        "Failed to extract price/title even with Sonnet selectors",
-      );
+      console.log("Sonnet also failed. Page title:", await page.title());
+      throw new Error("Failed to extract price/title even with Sonnet");
     }
 
     return { ...result, selectors, selectorsSource: "sonnet" };

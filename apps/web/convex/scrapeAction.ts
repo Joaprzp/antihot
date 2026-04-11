@@ -47,11 +47,14 @@ export const scrapeProduct = internalAction({
         title: string;
         price: number;
         selectors: { price: string; title: string };
-        selectorsSource: "cache" | "haiku" | "sonnet";
+        selectorsSource: "jsonld" | "cache" | "haiku" | "sonnet";
       };
 
-      // Cache selectors if they were freshly extracted
-      if (result.selectorsSource !== "cache") {
+      // Cache selectors if they were freshly extracted via Claude (not jsonld or cache)
+      if (
+        result.selectorsSource !== "cache" &&
+        result.selectorsSource !== "jsonld"
+      ) {
         await ctx.runMutation(internal.scraping.cacheSelectors, {
           domain: args.store,
           selectors: result.selectors,

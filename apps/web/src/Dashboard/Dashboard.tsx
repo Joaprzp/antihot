@@ -50,6 +50,12 @@ function formatDate(ts: number) {
   }).format(new Date(ts));
 }
 
+// HotSale 2026 starts May 11
+const HOTSALE_START = new Date("2026-05-11T00:00:00-03:00");
+function isHotsalePeriod() {
+  return new Date() >= HOTSALE_START;
+}
+
 function getDelta(before: number, after: number) {
   const diff = after - before;
   const pct = ((diff / before) * 100).toFixed(1);
@@ -560,7 +566,7 @@ function ProductCard({
             </div>
             <div className="px-5 py-4">
               <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
-                HOTSALE
+                {isHotsalePeriod() ? "HOTSALE" : "HOY"}
               </span>
               <p className="font-mono mt-2 text-[16px] font-bold tabular-nums tracking-[-0.02em] text-text-primary sm:text-[20px]">
                 {formatPrice(product.priceHotsale!)}

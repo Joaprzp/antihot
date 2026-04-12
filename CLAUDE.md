@@ -4,7 +4,7 @@
 
 ## What is AntiHot
 
-A web app that tracks Argentine ecommerce product prices **before** and **during** HotSale to expose fake discounts. Users paste product URLs, the app scrapes price + title, and a cron job re-scrapes on HotSale night. The dashboard shows the delta: price went down, up, or stayed the same.
+A web app that tracks Argentine ecommerce product prices **before** and **during** HotSale to expose fake discounts. Users paste product URLs, the app scrapes price + title, and a daily cron job re-scrapes all products. The dashboard shows the delta: price went down, up, or stayed the same.
 
 ## Architecture
 
@@ -53,7 +53,7 @@ antihot/
 5. Slow path (if no structured data): Playwright (with stealth plugin) renders page → try cached CSS selectors → if miss, Claude Haiku extracts selectors → cached per domain for all users.
 6. Product appears in dashboard with name, price, date, and "Ver página" link.
 7. Background: Playwright verify pass checks for a lower visible price (discount, promo) and silently updates the snapshot if found.
-8. Cron re-scrapes all products on HotSale night (structured data only, no Playwright verify — the structured data delta IS the comparison).
+8. Daily cron (03:00 AM Argentina) re-scrapes all products (structured data only, no Playwright verify — the structured data delta IS the comparison).
 9. Dashboard shows delta: ✅ bajó / ⚠️ subió / ➖ igual.
 
 ### Scraping extraction priority
@@ -65,18 +65,21 @@ antihot/
 4. **Claude Haiku** (`claude-haiku-4-5-20251001`) — extracts selectors from rendered HTML. Cached per domain for all users.
 5. **Background Playwright verify** — async pass after structured data scrape to check for a lower visible price (discounts, promos). Excludes installment amounts and pre-tax prices.
 
-**HotSale cron re-scrape:**
+**Daily cron re-scrape (03:00 AM Argentina / 06:00 UTC):**
 - Structured data only (fast path). No Playwright verify — the structured data price change IS what we're measuring.
 - URL dedup: if multiple users track the same URL, scrape once and write the snapshot to all products.
-- Staggered batches (100 at a time, rate-limited per domain) to avoid hammering stores.
+- Upsert logic: updates existing `hotsale` snapshots, doesn't create duplicates.
+- Staggered batches (50 at a time, 500ms between domains, 2s between batches) to avoid hammering stores.
+- Manual trigger: `npx convex run cronScrape:runDailyScrape`
 
 ### Scale projections
 
-At 3,000 users × 5 products = 15,000 products on HotSale night:
-- **Fast path** (structured data): ~1-2s each, 50 concurrent → ~5 min total.
-- **No Playwright** on cron night → Railway load is minimal (just HTTP fetches).
+At 3,000 users × 5 products = 15,000 products:
+- **Fast path** (structured data): ~1-2s each, batches of 50 → ~10 min total.
+- **No Playwright** on cron → Railway load is minimal (just HTTP fetches).
 - **URL dedup** reduces actual scrapes significantly (many users track the same popular products).
-- Cost: zero Claude calls (all structured data). Railway cost: negligible (no Chromium on cron night).
+- Cost: zero Claude calls (all structured data). Railway cost: negligible (no Chromium on cron).
+- Daily cron currently; can switch to event-based (HotSale night only) when user volume justifies it.
 
 ## Code conventions
 

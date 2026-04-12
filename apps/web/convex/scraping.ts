@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
 
 export const getCachedSelectors = internalQuery({
   args: { domain: v.string() },
@@ -89,5 +90,63 @@ export const markScrapeError = internalMutation({
       status: "error" as const,
       errorMessage: args.errorMessage,
     });
+  },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cron helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const getUrlProductMap = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    // Get all products with status "scraped" (skip pending/error)
+    const products = await ctx.db
+      .query("products")
+      .filter((q) => q.eq(q.field("status"), "scraped"))
+      .take(100_000);
+
+    // Group by URL
+    const urlMap: Record<string, Id<"products">[]> = {};
+    for (const p of products) {
+      if (!urlMap[p.url]) urlMap[p.url] = [];
+      urlMap[p.url].push(p._id);
+    }
+
+    return Object.entries(urlMap).map(([url, productIds]) => ({
+      url,
+      productIds,
+      store: products.find((p) => p.url === url)!.store,
+    }));
+  },
+});
+
+export const upsertSnapshot = internalMutation({
+  args: {
+    productId: v.id("products"),
+    price: v.number(),
+    phase: v.union(v.literal("before"), v.literal("hotsale")),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("snapshots")
+      .withIndex("by_productId_and_phase", (q) =>
+        q.eq("productId", args.productId).eq("phase", args.phase),
+      )
+      .first();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        price: args.price,
+        scrapedAt: Date.now(),
+      });
+    } else {
+      await ctx.db.insert("snapshots", {
+        productId: args.productId,
+        price: args.price,
+        scrapedAt: Date.now(),
+        phase: args.phase,
+      });
+    }
   },
 });

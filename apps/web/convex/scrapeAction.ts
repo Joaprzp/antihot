@@ -158,3 +158,52 @@ export const verifyProductPrice = internalAction({
     }
   },
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cron: lightweight scrape that returns data only (no DB writes)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const scrapeUrlOnly = internalAction({
+  args: {
+    url: v.string(),
+    store: v.string(),
+  },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ title: string; price: number } | { error: string }> => {
+    const scraperUrl: string | undefined = env.SCRAPER_URL;
+    if (!scraperUrl) return { error: "SCRAPER_URL not configured" };
+
+    const cached = await ctx.runQuery(internal.scraping.getCachedSelectors, {
+      domain: args.store,
+    });
+
+    try {
+      const response = await fetch(`${scraperUrl}/scrape`, {
+        method: "POST",
+        headers: scraperHeaders(),
+        body: JSON.stringify({
+          url: args.url,
+          selectors: cached?.selectors ?? null,
+          structuredDataOnly: true, // Cron mode: no Playwright fallback
+        }),
+      });
+
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        return { error: data?.error ?? "Scrape failed" };
+      }
+
+      const data = (await response.json()) as {
+        title: string;
+        price: number;
+      };
+      return { title: data.title, price: data.price };
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : "Unknown error" };
+    }
+  },
+});

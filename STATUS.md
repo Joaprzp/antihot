@@ -82,6 +82,18 @@
 - All external links have `rel="noopener noreferrer"`
 - `prefers-reduced-motion` respected for animations
 
+### Daily price cron
+- Convex scheduled function runs daily at 03:00 AM Argentina time (06:00 UTC)
+- **Structured data only** — no Playwright verify on cron (fast, cheap, Railway-friendly)
+- **URL dedup** — same URL tracked by multiple users → scrape once, write snapshot to all
+- **Upsert logic** — daily runs update existing `hotsale` snapshots, not create duplicates
+- **Rate limiting** — staggered batches (50 URLs), 500ms delay between domains, 2s between batches
+- Manual trigger: `npx convex run cronScrape:runDailyScrape`
+
+### Deployment
+- Cloudflare Pages for frontend (auto-deploy from main)
+- Production Convex deployment with auth config
+
 ### Tested ecommerce sites
 - **Fravega** — works via `__NEXT_DATA__` structured data
 - **Cetrogar** — works via JSON-LD structured data
@@ -94,21 +106,12 @@
 
 ## Next up
 
-### HotSale cron job
-- Convex scheduled function to re-scrape all products on HotSale night
-- **Structured data only** — no Playwright verify on cron (the price change in structured data IS the comparison)
-- **URL dedup** — same URL tracked by multiple users → scrape once, write snapshot to all
-- **Staggered batches** — 100 products per batch, rate-limited per domain
-- Writes `hotsale` phase snapshots
-- Scale target: 15,000 products (3,000 users × 5) in ~5 minutes
+### Remaining polish
+- Empty state improvements (optional)
 
-### Remaining UI work
-- Mobile responsive polish
-- Empty state improvements
-
-### Deployment
-- Cloudflare Pages for frontend
-- Production Convex deployment + auth config
+### Scale prep (when needed)
+- Event-based cron (HotSale night only) instead of daily
+- Larger batch sizes, tighter rate limits
 
 ### Future (post-MVP)
 - MercadoLibre support via user-authorized OAuth flow

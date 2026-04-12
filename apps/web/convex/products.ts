@@ -150,3 +150,136 @@ export const remove = mutation({
     await ctx.db.delete(args.productId);
   },
 });
+
+export const isAnonymousUser = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const user = await ctx.db.get(userId);
+    if (!user) return null;
+
+    return (user as { isAnonymous?: boolean }).isAnonymous === true;
+  },
+});
+
+export const currentUserId = query({
+  args: {},
+  handler: async (ctx) => {
+    return await getAuthUserId(ctx);
+  },
+});
+
+export const mergeAnonymousProducts = mutation({
+  args: {
+    anonymousUserId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const currentUserId = await getAuthUserId(ctx);
+    if (!currentUserId) throw new Error("Not authenticated");
+
+    // Don't merge with yourself
+    if (args.anonymousUserId === currentUserId) {
+      return { merged: false, reason: "same_user" };
+    }
+
+    // Verify the anonymous user exists
+    const anonymousUser = await ctx.db.get(args.anonymousUserId);
+    if (!anonymousUser) {
+      return { merged: false, reason: "anonymous_user_not_found" };
+    }
+
+    // Get all products from anonymous account
+    const anonymousProducts = await ctx.db
+      .query("products")
+      .withIndex("by_userId", (q) => q.eq("userId", args.anonymousUserId))
+      .take(1000);
+
+    if (anonymousProducts.length === 0) {
+      return { merged: true, transferred: 0, deduplicated: 0 };
+    }
+
+    // Get all products from current (Google) account
+    const currentProducts = await ctx.db
+      .query("products")
+      .withIndex("by_userId", (q) => q.eq("userId", currentUserId))
+      .take(1000);
+
+    // Build URL map for deduplication
+    const currentProductUrls = new Map<
+      string,
+      { productId: typeof currentProducts[0]["_id"]; earliestSnapshot: number }
+    >();
+
+    for (const product of currentProducts) {
+      const snapshots = await ctx.db
+        .query("snapshots")
+        .withIndex("by_productId", (q) => q.eq("productId", product._id))
+        .take(10);
+
+      const earliest = snapshots.reduce(
+        (min, s) => Math.min(min, s.scrapedAt),
+        Infinity,
+      );
+
+      currentProductUrls.set(product.url, {
+        productId: product._id,
+        earliestSnapshot: earliest === Infinity ? product._creationTime : earliest,
+      });
+    }
+
+    let transferred = 0;
+    let deduplicated = 0;
+
+    // Process anonymous products
+    for (const anonProduct of anonymousProducts) {
+      const anonSnapshots = await ctx.db
+        .query("snapshots")
+        .withIndex("by_productId", (q) => q.eq("productId", anonProduct._id))
+        .take(10);
+
+      const anonEarliest = anonSnapshots.reduce(
+        (min, s) => Math.min(min, s.scrapedAt),
+        Infinity,
+      );
+      const anonTimestamp =
+        anonEarliest === Infinity ? anonProduct._creationTime : anonEarliest;
+
+      const existing = currentProductUrls.get(anonProduct.url);
+
+      if (existing) {
+        // URL exists in both accounts - keep the one with earliest snapshot
+        deduplicated++;
+
+        if (anonTimestamp < existing.earliestSnapshot) {
+          // Anonymous version is older - delete current, transfer anonymous
+          const currentSnapshots = await ctx.db
+            .query("snapshots")
+            .withIndex("by_productId", (q) => q.eq("productId", existing.productId))
+            .take(100);
+
+          for (const snapshot of currentSnapshots) {
+            await ctx.db.delete(snapshot._id);
+          }
+          await ctx.db.delete(existing.productId);
+
+          // Transfer anonymous product to current user
+          await ctx.db.patch(anonProduct._id, { userId: currentUserId });
+        } else {
+          // Current version is older - delete anonymous product and its snapshots
+          for (const snapshot of anonSnapshots) {
+            await ctx.db.delete(snapshot._id);
+          }
+          await ctx.db.delete(anonProduct._id);
+        }
+      } else {
+        // URL only in anonymous - transfer to current user
+        await ctx.db.patch(anonProduct._id, { userId: currentUserId });
+        transferred++;
+      }
+    }
+
+    return { merged: true, transferred, deduplicated };
+  },
+});

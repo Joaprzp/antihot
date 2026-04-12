@@ -5,8 +5,10 @@ import { useConvexAuth } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "../../convex/_generated/api";
 import { Icon } from "@/Shared/Icon";
-import { Link01Icon, Delete02Icon } from "@hugeicons/core-free-icons";
+import { Link01Icon, Delete02Icon, UserAdd01Icon } from "@hugeicons/core-free-icons";
 import type { Id } from "../../convex/_generated/dataModel";
+
+const PENDING_MERGE_KEY = "pendingMergeAnonymousUserId";
 
 function useDelayedLoading(isLoading: boolean, delayMs = 300) {
   const [show, setShow] = useState(false);
@@ -68,7 +70,7 @@ function getDelta(before: number, after: number) {
 
 export function Dashboard() {
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
-  const { signOut } = useAuthActions();
+  const { signIn, signOut } = useAuthActions();
   const navigate = useNavigate({ from: "/dashboard" });
   const { sort: sortField, order: sortOrder } = useSearch({
     from: "/dashboard",
@@ -81,12 +83,22 @@ export function Dashboard() {
     api.products.currentUser,
     isAuthenticated ? {} : "skip",
   );
+  const isAnonymous = useQuery(
+    api.products.isAnonymousUser,
+    isAuthenticated ? {} : "skip",
+  );
+  const currentUserId = useQuery(
+    api.products.currentUserId,
+    isAuthenticated ? {} : "skip",
+  );
   const addProduct = useMutation(api.products.add);
   const removeProduct = useMutation(api.products.remove);
+  const mergeProducts = useMutation(api.products.mergeAnonymousProducts);
   const [url, setUrl] = useState("");
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [linking, setLinking] = useState(false);
 
   useEffect(() => {
     let ticking = false;
@@ -109,6 +121,27 @@ export function Dashboard() {
     const timer = setTimeout(() => setAddError(null), 5000);
     return () => clearTimeout(timer);
   }, [addError]);
+
+  // Post-OAuth merge: transfer products from anonymous account
+  useEffect(() => {
+    const pendingUserId = localStorage.getItem(PENDING_MERGE_KEY);
+    if (pendingUserId && isAuthenticated && isAnonymous === false) {
+      localStorage.removeItem(PENDING_MERGE_KEY);
+      void mergeProducts({ anonymousUserId: pendingUserId as Id<"users"> });
+    }
+  }, [isAuthenticated, isAnonymous, mergeProducts]);
+
+  async function handleLinkAccount() {
+    if (!currentUserId || linking) return;
+    setLinking(true);
+    localStorage.setItem(PENDING_MERGE_KEY, currentUserId);
+    try {
+      await signIn("google");
+    } catch {
+      localStorage.removeItem(PENDING_MERGE_KEY);
+      setLinking(false);
+    }
+  }
 
   function setSort(field: SortField, order: SortOrder) {
     navigate({ search: { sort: field, order } });
@@ -196,6 +229,17 @@ export function Dashboard() {
             <span className="hidden font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted sm:block">
               {productCount} {productCount === 1 ? "PRODUCTO" : "PRODUCTOS"}
             </span>
+            {isAnonymous && (
+              <button
+                onClick={handleLinkAccount}
+                disabled={linking}
+                className="group flex items-center gap-1.5 rounded-full border border-black py-1.5 pl-2 pr-3 font-mono text-[11px] uppercase tracking-[0.06em] text-black transition-colors hover:bg-black hover:text-surface focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-40"
+              >
+                <Icon icon={UserAdd01Icon} size={14} />
+                <span className="hidden sm:inline">Vincular cuenta</span>
+                <span className="sm:hidden">Vincular</span>
+              </button>
+            )}
             <button
               onClick={() => void signOut().then(() => navigate({ to: "/" }))}
               className="group flex items-center gap-2 rounded-full py-1 pl-1 pr-3 transition-colors hover:bg-border/50 focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-surface"

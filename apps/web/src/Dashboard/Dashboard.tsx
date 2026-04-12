@@ -85,13 +85,30 @@ export function Dashboard() {
   const removeProduct = useMutation(api.products.remove);
   const [url, setUrl] = useState("");
   const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    let ticking = false;
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 40);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Auto-clear add error
+  useEffect(() => {
+    if (!addError) return;
+    const timer = setTimeout(() => setAddError(null), 5000);
+    return () => clearTimeout(timer);
+  }, [addError]);
 
   function setSort(field: SortField, order: SortOrder) {
     navigate({ search: { sort: field, order } });
@@ -108,18 +125,20 @@ export function Dashboard() {
   async function handleAdd() {
     if (!url.trim()) return;
     setAdding(true);
+    setAddError(null);
     try {
       await addProduct({ url: url.trim() });
       setUrl("");
-    } catch {
-      // TODO: inline error on card
+    } catch (error) {
+      setAddError(
+        error instanceof Error ? error.message : "No se pudo agregar",
+      );
     } finally {
       setAdding(false);
     }
   }
 
   const sorted = [...(products ?? [])].sort((a, b) => {
-    // Pending/error products always first
     if (a.status === "pending" && b.status !== "pending") return -1;
     if (b.status === "pending" && a.status !== "pending") return 1;
 
@@ -137,10 +156,10 @@ export function Dashboard() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F5F5F5] font-body">
-        <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+      <div className="flex min-h-[100dvh] items-center justify-center bg-surface font-body">
+        <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
           CARGANDO...
-        </p>
+        </span>
       </div>
     );
   }
@@ -151,46 +170,50 @@ export function Dashboard() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F5F5F5] font-body">
+    <div className="flex min-h-[100dvh] flex-col bg-surface font-body">
       {/* Nav */}
-      <nav>
+      <nav aria-label="Navegación principal">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-3">
-            <p className="text-[15px] font-medium text-[#000000]">AntiHot</p>
+            <span className="text-[15px] font-medium text-black">AntiHot</span>
             <a
               href="https://cafecito.app/casilisto"
-              rel="noopener"
+              rel="noopener noreferrer"
               target="_blank"
-              className="hidden sm:block"
+              className="hidden rounded focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-surface sm:block"
             >
               <img
                 srcSet="https://cdn.cafecito.app/imgs/buttons/button_5.png 1x, https://cdn.cafecito.app/imgs/buttons/button_5_2x.png 2x, https://cdn.cafecito.app/imgs/buttons/button_5_3.75x.png 3.75x"
                 src="https://cdn.cafecito.app/imgs/buttons/button_5.png"
                 alt="Invitame un café en cafecito.app"
-                className="h-6"
+                width={91}
+                height={24}
+                className="h-6 w-auto"
               />
             </a>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
-            <p className="hidden font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999] sm:block">
+            <span className="hidden font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted sm:block">
               {productCount} {productCount === 1 ? "PRODUCTO" : "PRODUCTOS"}
-            </p>
+            </span>
             {user?.pictureUrl ? (
               <img
                 src={user.pictureUrl}
-                alt={user.name ?? ""}
+                alt={user.name ?? "Avatar"}
+                width={32}
+                height={32}
                 className="h-8 w-8 rounded-full"
               />
             ) : (
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#000000]">
-                <span className="font-mono text-[11px] font-bold text-[#F5F5F5]">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black">
+                <span className="font-mono text-[11px] font-bold text-surface">
                   {(user?.name ?? "?").slice(0, 2).toUpperCase()}
                 </span>
               </div>
             )}
             <button
               onClick={() => void signOut().then(() => navigate({ to: "/" }))}
-              className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999] transition-colors hover:text-[#000000]"
+              className="font-mono min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-[11px] uppercase tracking-[0.08em] text-text-muted transition-colors hover:text-black focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded"
             >
               Salir
             </button>
@@ -202,22 +225,23 @@ export function Dashboard() {
       <div className="sticky top-14 z-10">
         <div
           className={`mx-auto flex items-center gap-2 px-4 transition-all duration-200 sm:gap-3 sm:px-6 ${
-            scrolled ? "max-w-2xl py-1.5" : "max-w-6xl py-3"
+            scrolled ? "py-3 sm:max-w-2xl sm:py-1.5" : "max-w-6xl py-3"
           }`}
         >
           <div
-            className={`flex flex-1 items-center rounded-full border border-[#E8E8E8] bg-[#FFFFFF] transition-all duration-200 focus-within:border-[#000000] ${
-              scrolled ? "px-3 py-1.5" : "px-4 py-2.5"
+            className={`flex flex-1 items-center rounded-full border border-border bg-surface-raised transition-all duration-200 focus-within:border-black ${
+              scrolled ? "px-4 py-2.5 sm:px-3 sm:py-1.5" : "px-4 py-2.5"
             }`}
           >
-            <Icon icon={Link01Icon} size={scrolled ? 14 : 16} className="text-[#999999]" />
+            <Icon icon={Link01Icon} size={scrolled ? 14 : 16} className="text-text-muted" />
             <input
               type="text"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
               placeholder="Pegá la URL del producto..."
-              className={`ml-2.5 flex-1 bg-transparent text-[#1A1A1A] outline-none transition-all duration-200 placeholder:text-[#999999] ${
+              aria-label="URL del producto"
+              className={`ml-2.5 flex-1 bg-transparent text-text-primary outline-none transition-all duration-200 placeholder:text-text-muted ${
                 scrolled ? "text-[12px]" : "text-[14px]"
               }`}
             />
@@ -225,19 +249,24 @@ export function Dashboard() {
           <button
             onClick={handleAdd}
             disabled={adding || !url.trim()}
-            className={`font-mono inline-flex items-center rounded-full bg-[#000000] uppercase tracking-[0.06em] text-[#F5F5F5] transition-all duration-200 hover:bg-[#1A1A1A] disabled:opacity-40 ${
-              scrolled ? "h-8 px-4 text-[11px]" : "h-10 px-5 text-[12px]"
+            className={`font-mono inline-flex items-center rounded-full bg-black uppercase tracking-[0.06em] text-surface transition-all duration-200 hover:bg-text-primary focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-40 ${
+              scrolled ? "h-10 px-5 text-[12px] sm:h-8 sm:px-4 sm:text-[11px]" : "h-10 px-5 text-[12px]"
             }`}
           >
             {adding ? "AGREGANDO..." : "AGREGAR"}
           </button>
         </div>
+        {addError && (
+          <p className="mx-auto max-w-6xl px-4 pt-1 text-[13px] text-accent animate-fade-in sm:px-6">
+            {addError}
+          </p>
+        )}
       </div>
 
       {/* HotSale date + Sort controls */}
       <div className="mx-auto w-full max-w-6xl px-4 pt-6 pb-2 sm:px-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1" role="group" aria-label="Ordenar productos">
             <SortButton
               label="PRECIO"
               active={sortField === "price"}
@@ -251,41 +280,35 @@ export function Dashboard() {
               onClick={() => toggleSort("date")}
             />
           </div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+          <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
             HotSale comienza el 11/05/2026
-          </p>
+          </span>
         </div>
       </div>
 
       {/* Product grid */}
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-2 pb-8 sm:px-6">
         {isLoadingProducts ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="animate-fade-in"
-              >
+              <div key={i} className="min-w-0 animate-fade-in">
                 <SkeletonCard />
               </div>
             ))}
           </div>
         ) : sorted.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24">
-            <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+            <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
               SIN PRODUCTOS
-            </p>
-            <p className="mt-2 text-[15px] text-[#666666]">
+            </span>
+            <p className="mt-2 text-[15px] text-text-secondary">
               Pegá una URL arriba para empezar a trackear precios
             </p>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {sorted.map((product) => (
-              <div
-                key={product._id}
-                className="animate-fade-in"
-              >
+              <div key={product._id} className="min-w-0 animate-fade-in">
                 <ProductCard
                   product={product}
                   onDelete={() =>
@@ -316,10 +339,10 @@ function SortButton({
   return (
     <button
       onClick={onClick}
-      className={`font-mono inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-[0.08em] transition-colors ${
+      className={`font-mono inline-flex min-h-[44px] items-center gap-1 rounded-full px-3 py-2 text-[11px] uppercase tracking-[0.08em] transition-colors focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-surface sm:min-h-0 ${
         active
-          ? "bg-[#000000] text-[#F5F5F5]"
-          : "text-[#999999] hover:text-[#666666]"
+          ? "bg-black text-surface"
+          : "text-text-muted hover:text-text-secondary"
       }`}
     >
       {label}
@@ -342,6 +365,92 @@ type Product = {
   dateHotsale: number | null;
 };
 
+function CardHeader({
+  product,
+  onDelete,
+}: {
+  product: Product;
+  onDelete: () => void;
+}) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const headerRef = useRef<HTMLDivElement>(null);
+
+  // Reset confirm state after 3 seconds
+  useEffect(() => {
+    if (!confirmDelete) return;
+    const timer = setTimeout(() => setConfirmDelete(false), 3000);
+    return () => clearTimeout(timer);
+  }, [confirmDelete]);
+
+  // Click outside resets confirm
+  useEffect(() => {
+    if (!confirmDelete) return;
+    const handleClick = (e: MouseEvent) => {
+      if (headerRef.current && !headerRef.current.contains(e.target as Node)) {
+        setConfirmDelete(false);
+      }
+    };
+    document.addEventListener("click", handleClick, true);
+    return () => document.removeEventListener("click", handleClick, true);
+  }, [confirmDelete]);
+
+  return (
+    <div ref={headerRef} className="border-b border-border px-5 py-4">
+      <div className="flex items-center justify-between">
+        <span className="min-w-0 truncate font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
+          {product.store}
+        </span>
+        <div className="flex shrink-0 items-center gap-1">
+          {confirmDelete ? (
+            <button
+              onClick={onDelete}
+              className="font-mono min-h-[44px] px-2 text-[11px] uppercase tracking-[0.08em] text-accent transition-colors animate-fade-in focus-visible:ring-2 focus-visible:ring-accent rounded"
+            >
+              Confirmar
+            </button>
+          ) : (
+            <>
+              <a
+                href={product.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono min-h-[44px] inline-flex items-center px-1 text-[11px] uppercase tracking-[0.08em] text-text-muted transition-colors hover:text-black focus-visible:ring-2 focus-visible:ring-black rounded"
+              >
+                Ver página
+              </a>
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="-my-2 -mr-2 inline-flex items-center justify-center p-3 text-border-visible transition-colors hover:text-accent focus-visible:ring-2 focus-visible:ring-black rounded"
+                title="Eliminar producto"
+              >
+                <Icon icon={Delete02Icon} size={16} />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+      <p className="mt-1.5 flex items-center gap-1.5 overflow-hidden text-[16px] font-semibold leading-snug text-text-primary">
+        <span
+          className="min-w-0 shrink overflow-hidden whitespace-nowrap"
+          style={{ textOverflow: "clip" }}
+        >
+          {product.title ?? "Producto"}
+        </span>
+        {(product.title?.length ?? 0) > 45 && (
+          <a
+            href={product.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 rounded bg-border px-1.5 py-0.5 text-[10px] font-normal leading-none text-text-muted transition-colors hover:bg-border-visible focus-visible:ring-2 focus-visible:ring-black"
+          >
+            ···
+          </a>
+        )}
+      </p>
+    </div>
+  );
+}
+
 function ProductCard({
   product,
   onDelete,
@@ -357,16 +466,16 @@ function ProductCard({
 
   if (product.status === "pending") {
     return (
-      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-[#E8E8E8] bg-[#FFFFFF]">
-        <div className="border-b border-[#E8E8E8] px-5 py-4">
-          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface-raised">
+        <div className="border-b border-border px-5 py-4">
+          <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
             {product.store}
-          </p>
-          <div className="mt-2 h-4 w-48 animate-pulse rounded bg-[#E8E8E8]" />
+          </span>
+          <div className="mt-2 h-4 w-48 animate-pulse rounded bg-border" />
         </div>
         <div className="flex-1 px-5 py-4">
-          <div className="h-3 w-20 animate-pulse rounded bg-[#E8E8E8]" />
-          <div className="mt-3 h-6 w-32 animate-pulse rounded bg-[#E8E8E8]" />
+          <div className="h-3 w-20 animate-pulse rounded bg-border" />
+          <div className="mt-3 h-6 w-32 animate-pulse rounded bg-border" />
         </div>
       </div>
     );
@@ -374,127 +483,55 @@ function ProductCard({
 
   if (product.status === "error") {
     return (
-      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-[#E8E8E8] bg-[#FFFFFF]">
-        <div className="border-b border-[#E8E8E8] px-5 py-4">
-          <div className="flex items-center justify-between">
-            <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
-              {product.store}
-            </p>
-            <div className="flex items-center gap-2">
-              <a
-                href={product.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999] transition-colors hover:text-[#000000]"
-              >
-                Ver página
-              </a>
-              <button
-                onClick={onDelete}
-                className="text-[#CCCCCC] transition-colors hover:text-[#D71921]"
-                title="Eliminar producto"
-              >
-                <Icon icon={Delete02Icon} size={16} />
-              </button>
-            </div>
-          </div>
-          <p className="mt-1.5 flex items-center gap-1.5 text-[16px] font-semibold leading-snug text-[#1A1A1A]">
-            <span className="min-w-0 shrink overflow-hidden whitespace-nowrap" style={{ textOverflow: "clip" }}>
-              {product.title ?? "Producto"}
-            </span>
-            {(product.title?.length ?? 0) > 45 && (
-              <span className="shrink-0 rounded bg-[#E8E8E8] px-1.5 py-0.5 text-[10px] font-normal leading-none text-[#999999]">
-                ···
-              </span>
-            )}
-          </p>
-        </div>
+      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface-raised">
+        <CardHeader product={product} onDelete={onDelete} />
         <div className="flex-1 px-5 py-4">
-          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#D71921]">
+          <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-accent">
             {product.errorMessage ?? "ERROR: NO SE PUDO LEER"}
-          </p>
+          </span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-[#E8E8E8] bg-[#FFFFFF]">
-      {/* Header */}
-      <div className="border-b border-[#E8E8E8] px-5 py-4">
-        <div className="flex items-center justify-between">
-          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
-            {product.store}
-          </p>
-          <div className="flex items-center gap-2">
-            <a
-              href={product.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999] transition-colors hover:text-[#000000]"
-            >
-              Ver página
-            </a>
-            <button
-              onClick={onDelete}
-              className="text-[#CCCCCC] transition-colors hover:text-[#D71921]"
-              title="Eliminar producto"
-            >
-              <Icon icon={Delete02Icon} size={16} />
-            </button>
-          </div>
-        </div>
-        <p className="mt-1.5 flex items-center gap-1.5 text-[16px] font-semibold leading-snug text-[#1A1A1A]">
-          <span className="min-w-0 shrink overflow-hidden whitespace-nowrap" style={{ textOverflow: "clip" }}>
-            {product.title ?? "Producto"}
-          </span>
-          {(product.title?.length ?? 0) > 45 && (
-            <a
-              href={product.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 rounded bg-[#E8E8E8] px-1.5 py-0.5 text-[10px] font-normal leading-none text-[#999999] transition-colors hover:bg-[#CCCCCC]"
-            >
-              ···
-            </a>
-          )}
-        </p>
-      </div>
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface-raised">
+      <CardHeader product={product} onDelete={onDelete} />
 
       {hasBothPrices ? (
         <>
-          <div className="grid grid-cols-2 divide-x divide-[#E8E8E8]">
+          <div className="grid grid-cols-2 divide-x divide-border">
             <div className="px-5 py-4">
-              <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+              <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
                 ANTES
-              </p>
-              <p className="font-mono mt-2 text-[20px] font-bold tracking-[-0.02em] text-[#1A1A1A]">
+              </span>
+              <p className="font-mono mt-2 text-[16px] font-bold tracking-[-0.02em] text-text-primary sm:text-[20px]">
                 {formatPrice(product.priceBefore!)}
               </p>
-              <p className="font-mono mt-1 text-[11px] tracking-[0.08em] text-[#999999]">
+              <span className="font-mono mt-1 block text-[11px] tracking-[0.08em] text-text-muted">
                 {formatDate(product.dateBefore!)}
-              </p>
+              </span>
             </div>
             <div className="px-5 py-4">
-              <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+              <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
                 HOTSALE
-              </p>
-              <p className="font-mono mt-2 text-[20px] font-bold tracking-[-0.02em] text-[#1A1A1A]">
+              </span>
+              <p className="font-mono mt-2 text-[16px] font-bold tracking-[-0.02em] text-text-primary sm:text-[20px]">
                 {formatPrice(product.priceHotsale!)}
               </p>
-              <p className="font-mono mt-1 text-[11px] tracking-[0.08em] text-[#999999]">
+              <span className="font-mono mt-1 block text-[11px] tracking-[0.08em] text-text-muted">
                 {formatDate(product.dateHotsale!)}
-              </p>
+              </span>
             </div>
           </div>
-          <div className="flex items-center justify-between border-t border-[#E8E8E8] px-5 py-3">
+          <div className="flex items-center justify-between border-t border-border px-5 py-3">
             <p
               className={`text-[14px] font-medium ${
                 delta!.type === "up"
-                  ? "text-[#D71921]"
+                  ? "text-accent"
                   : delta!.type === "down"
-                    ? "text-[#4A9E5C]"
-                    : "text-[#999999]"
+                    ? "text-green"
+                    : "text-text-muted"
               }`}
             >
               {delta!.label}
@@ -502,10 +539,10 @@ function ProductCard({
             <span
               className={`font-mono rounded-full border px-2.5 py-0.5 text-[12px] font-bold tracking-[-0.02em] ${
                 delta!.type === "up"
-                  ? "border-[#D71921] text-[#D71921]"
+                  ? "border-accent text-accent"
                   : delta!.type === "down"
-                    ? "border-[#4A9E5C] text-[#4A9E5C]"
-                    : "border-[#CCCCCC] text-[#999999]"
+                    ? "border-green text-green"
+                    : "border-border-visible text-text-muted"
               }`}
             >
               {delta!.pct}
@@ -514,20 +551,20 @@ function ProductCard({
         </>
       ) : (
         <div className="flex-1 px-5 py-4">
-          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+          <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
             PRECIO REGISTRADO
-          </p>
+          </span>
           {product.priceBefore !== null ? (
             <>
-              <p className="font-mono mt-2 text-[20px] font-bold tracking-[-0.02em] text-[#1A1A1A]">
+              <p className="font-mono mt-2 text-[16px] font-bold tracking-[-0.02em] text-text-primary sm:text-[20px]">
                 {formatPrice(product.priceBefore)}
               </p>
-              <p className="font-mono mt-1 text-[11px] tracking-[0.08em] text-[#999999]">
+              <span className="font-mono mt-1 block text-[11px] tracking-[0.08em] text-text-muted">
                 {formatDate(product.dateBefore!)}
-              </p>
+              </span>
             </>
           ) : (
-            <div className="mt-2 h-6 w-32 animate-pulse rounded bg-[#E8E8E8]" />
+            <div className="mt-2 h-6 w-32 animate-pulse rounded bg-border" />
           )}
         </div>
       )}
@@ -537,15 +574,15 @@ function ProductCard({
 
 function SkeletonCard() {
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-[#E8E8E8] bg-[#FFFFFF]">
-      <div className="border-b border-[#E8E8E8] px-5 py-4">
-        <div className="h-3 w-24 animate-pulse rounded bg-[#E8E8E8]" />
-        <div className="mt-3 h-4 w-48 animate-pulse rounded bg-[#E8E8E8]" />
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface-raised">
+      <div className="border-b border-border px-5 py-4">
+        <div className="h-3 w-24 animate-pulse rounded bg-border" />
+        <div className="mt-3 h-4 w-48 animate-pulse rounded bg-border" />
       </div>
       <div className="flex-1 px-5 py-4">
-        <div className="h-3 w-20 animate-pulse rounded bg-[#E8E8E8]" />
-        <div className="mt-3 h-6 w-32 animate-pulse rounded bg-[#E8E8E8]" />
-        <div className="mt-2 h-3 w-16 animate-pulse rounded bg-[#E8E8E8]" />
+        <div className="h-3 w-20 animate-pulse rounded bg-border" />
+        <div className="mt-3 h-6 w-32 animate-pulse rounded bg-border" />
+        <div className="mt-2 h-3 w-16 animate-pulse rounded bg-border" />
       </div>
     </div>
   );

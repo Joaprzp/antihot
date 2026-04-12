@@ -37,4 +37,10 @@ export default defineSchema({
     }),
     lastVerified: v.number(),
   }).index("by_domain", ["domain"]),
+
+  feedback: defineTable({
+    userId: v.optional(v.id("users")),
+    message: v.string(),
+    page: v.string(),
+  }),
 });

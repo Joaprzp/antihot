@@ -9,7 +9,9 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as feedback from "../feedback.js";
 import type * as http from "../http.js";
+import type * as notifications from "../notifications.js";
 import type * as products from "../products.js";
 import type * as scrapeAction from "../scrapeAction.js";
 import type * as scraping from "../scraping.js";
@@ -22,7 +24,9 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  feedback: typeof feedback;
   http: typeof http;
+  notifications: typeof notifications;
   products: typeof products;
   scrapeAction: typeof scrapeAction;
   scraping: typeof scraping;

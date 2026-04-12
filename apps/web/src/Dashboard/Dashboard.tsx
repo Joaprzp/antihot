@@ -154,13 +154,14 @@ export function Dashboard() {
     <div className="flex min-h-screen flex-col bg-[#F5F5F5] font-body">
       {/* Nav */}
       <nav>
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-3">
             <p className="text-[15px] font-medium text-[#000000]">AntiHot</p>
             <a
               href="https://cafecito.app/casilisto"
               rel="noopener"
               target="_blank"
+              className="hidden sm:block"
             >
               <img
                 srcSet="https://cdn.cafecito.app/imgs/buttons/button_5.png 1x, https://cdn.cafecito.app/imgs/buttons/button_5_2x.png 2x, https://cdn.cafecito.app/imgs/buttons/button_5_3.75x.png 3.75x"
@@ -170,8 +171,8 @@ export function Dashboard() {
               />
             </a>
           </div>
-          <div className="flex items-center gap-4">
-            <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <p className="hidden font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999] sm:block">
               {productCount} {productCount === 1 ? "PRODUCTO" : "PRODUCTOS"}
             </p>
             {user?.pictureUrl ? (
@@ -200,7 +201,7 @@ export function Dashboard() {
       {/* Input */}
       <div className="sticky top-14 z-10">
         <div
-          className={`mx-auto flex items-center gap-3 px-6 transition-all duration-200 ${
+          className={`mx-auto flex items-center gap-2 px-4 transition-all duration-200 sm:gap-3 sm:px-6 ${
             scrolled ? "max-w-2xl py-1.5" : "max-w-6xl py-3"
           }`}
         >
@@ -234,21 +235,21 @@ export function Dashboard() {
       </div>
 
       {/* HotSale date + Sort controls */}
-      <div className="mx-auto w-full max-w-6xl px-6 pt-6 pb-2">
-        <div className="flex items-center justify-between">
+      <div className="mx-auto w-full max-w-6xl px-4 pt-6 pb-2 sm:px-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-1">
-          <SortButton
-            label="PRECIO"
-            active={sortField === "price"}
-            order={sortField === "price" ? sortOrder : null}
-            onClick={() => toggleSort("price")}
-          />
-          <SortButton
-            label="FECHA"
-            active={sortField === "date"}
-            order={sortField === "date" ? sortOrder : null}
-            onClick={() => toggleSort("date")}
-          />
+            <SortButton
+              label="PRECIO"
+              active={sortField === "price"}
+              order={sortField === "price" ? sortOrder : null}
+              onClick={() => toggleSort("price")}
+            />
+            <SortButton
+              label="FECHA"
+              active={sortField === "date"}
+              order={sortField === "date" ? sortOrder : null}
+              onClick={() => toggleSort("date")}
+            />
           </div>
           <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
             HotSale comienza el 11/05/2026
@@ -257,7 +258,7 @@ export function Dashboard() {
       </div>
 
       {/* Product grid */}
-      <main className="mx-auto w-full max-w-6xl flex-1 px-6 pt-2 pb-8">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-2 pb-8 sm:px-6">
         {isLoadingProducts ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[0, 1, 2].map((i) => (

@@ -2,9 +2,6 @@
 @import "@fontsource-variable/playfair-display/index.css";
 @import "@fontsource-variable/source-sans-3/index.css";
 @import "@fontsource-variable/geist-mono/index.css";
-@import "@fontsource-variable/space-grotesk/index.css";
-@import "@fontsource/space-mono/400.css";
-@import "@fontsource/space-mono/700.css";
 
 @keyframes fade-in {
   from { opacity: 0; }
@@ -19,23 +16,18 @@
   --font-heading: "Playfair Display Variable", serif;
   --font-body: "Source Sans 3 Variable", sans-serif;
   --font-mono: "Geist Mono Variable", monospace;
-  --font-nothing: "Space Grotesk Variable", "DM Sans", system-ui, sans-serif;
-  --font-nothing-mono: "Space Mono", "JetBrains Mono", monospace;
-  --color-accent: oklch(0.55 0.22 27);
-  --color-accent-light: oklch(0.55 0.22 27 / 0.1);
-  --color-accent-hover: oklch(0.48 0.2 27);
-  --color-surface: oklch(0.985 0.002 90);
+  --color-accent: oklch(0.5 0.2 25);
+  --color-accent-hover: oklch(0.45 0.18 25);
+  --color-surface: oklch(0.97 0.001 90);
   --color-surface-raised: oklch(1 0 0);
-  --color-text-primary: oklch(0.2 0.02 30);
-  --color-text-secondary: oklch(0.45 0.02 30);
-  --color-text-muted: oklch(0.6 0.01 30);
-  --color-border: oklch(0.88 0.01 80);
+  --color-black: oklch(0 0 0);
+  --color-text-primary: oklch(0.15 0.005 30);
+  --color-text-secondary: oklch(0.45 0.005 30);
+  --color-text-muted: oklch(0.63 0.005 30);
+  --color-border: oklch(0.92 0.003 80);
+  --color-border-visible: oklch(0.82 0.003 80);
   --color-green: oklch(0.55 0.18 155);
   --color-green-light: oklch(0.55 0.18 155 / 0.1);
-  --color-red: oklch(0.55 0.22 27);
-  --color-red-light: oklch(0.55 0.22 27 / 0.1);
-  --color-neutral: oklch(0.55 0.01 80);
-  --color-neutral-light: oklch(0.55 0.01 80 / 0.1);
 }
 
 body {

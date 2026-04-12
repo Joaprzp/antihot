@@ -61,7 +61,7 @@ export function FeedbackWidget() {
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Contanos qué pensás..."
+            placeholder="Contanos qué pensás, o reporta una página que no funcione bien..."
             rows={3}
             className="mt-3 w-full resize-none rounded-lg border border-border bg-surface px-3 py-2 text-[14px] text-text-primary outline-none placeholder:text-text-muted focus:border-black"
           />

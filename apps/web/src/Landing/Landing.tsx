@@ -9,11 +9,18 @@ export function Landing() {
   const navigate = useNavigate();
   const [signingIn, setSigningIn] = useState(false);
 
-  // Auto sign-in anonymously
+  // Redirect if already authenticated (existing session)
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate({ to: "/dashboard" });
+    }
+  }, [isLoading, isAuthenticated, navigate]);
+
+  // Auto sign-in anonymously for new users
   useEffect(() => {
     if (!isLoading && !isAuthenticated && !signingIn) {
       setSigningIn(true);
-      void signIn("anonymous").catch(() => {
+      void signIn("anonymous").finally(() => {
         setSigningIn(false);
       });
     }

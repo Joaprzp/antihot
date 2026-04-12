@@ -46,14 +46,15 @@ antihot/
 
 ## User flow
 
-1. Sign in with Google (Convex Auth).
+1. Land on homepage → auto-sign-in anonymously (no account needed).
 2. Paste a product URL (Fravega, Cetrogar, Naldo, etc. — MercadoLibre not yet supported).
-3. Fast path: plain HTTP fetch → extract structured data (JSON-LD, `__NEXT_DATA__`, inline Schema.org). No Playwright or Claude needed for most sites.
-4. Slow path (if no structured data): Playwright (with stealth plugin) renders page → try cached CSS selectors → if miss, Claude Haiku extracts selectors → cached per domain for all users.
-5. Product appears in dashboard with name, price, date, and "Ver página" link.
-6. Background: Playwright verify pass checks for a lower visible price (discount, promo) and silently updates the snapshot if found.
-7. Cron re-scrapes all products on HotSale night (structured data only, no Playwright verify — the structured data delta IS the comparison).
-8. Dashboard shows delta: ✅ bajó / ⚠️ subió / ➖ igual.
+3. Optional: click "Vincular cuenta" in dashboard to upgrade to Google for cross-device persistence.
+4. Fast path: plain HTTP fetch → extract structured data (JSON-LD, `__NEXT_DATA__`, inline Schema.org). No Playwright or Claude needed for most sites.
+5. Slow path (if no structured data): Playwright (with stealth plugin) renders page → try cached CSS selectors → if miss, Claude Haiku extracts selectors → cached per domain for all users.
+6. Product appears in dashboard with name, price, date, and "Ver página" link.
+7. Background: Playwright verify pass checks for a lower visible price (discount, promo) and silently updates the snapshot if found.
+8. Cron re-scrapes all products on HotSale night (structured data only, no Playwright verify — the structured data delta IS the comparison).
+9. Dashboard shows delta: ✅ bajó / ⚠️ subió / ➖ igual.
 
 ### Scraping extraction priority
 

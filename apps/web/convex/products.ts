@@ -184,10 +184,13 @@ export const mergeAnonymousProducts = mutation({
       return { merged: false, reason: "same_user" };
     }
 
-    // Verify the anonymous user exists
+    // Verify the anonymous user exists AND is actually anonymous
     const anonymousUser = await ctx.db.get(args.anonymousUserId);
     if (!anonymousUser) {
       return { merged: false, reason: "anonymous_user_not_found" };
+    }
+    if (!(anonymousUser as { isAnonymous?: boolean }).isAnonymous) {
+      return { merged: false, reason: "not_anonymous_user" };
     }
 
     // Get all products from anonymous account

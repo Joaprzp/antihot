@@ -1,6 +1,6 @@
 # AntiHot — Project Status
 
-**Last updated:** 2026-04-11
+**Last updated:** 2026-04-12
 
 ---
 
@@ -24,9 +24,11 @@
 - `scrapeAction.ts` — Node.js action orchestrating the scrape flow: check domain cache → call external scraper → cache new selectors → write snapshot
 
 ### Auth
-- `@convex-dev/auth` + `@auth/core` with Google OAuth provider
+- `@convex-dev/auth` + `@auth/core` with Anonymous + Google OAuth providers
+- Anonymous-first: users auto-sign-in anonymously on first visit, no account required
+- Optional Google upgrade via "Vincular cuenta" button in dashboard nav
+- Account linking merges products with URL deduplication (keeps earliest snapshot)
 - `ConvexAuthProvider` wrapping the app
-- Landing: sign-in button triggers Google OAuth, auto-redirects to `/dashboard` on success, loading state while Convex connects
 - Dashboard: redirects to `/` if unauthenticated
 
 ### Landing page
@@ -35,7 +37,7 @@
 - Hero headline ("Descuento o verso?") with accent-colored "verso?"
 - Mobile: compact demo card above the fold, centered stacked layout
 - Desktop: side-by-side copy + full demo card
-- Sign-in error feedback with auto-clear
+- Auto-anonymous-signin on page load, "No hace falta cuenta" subtitle
 - Full WCAG focus-visible indicators, semantic HTML, aria-labels
 
 ### Dashboard

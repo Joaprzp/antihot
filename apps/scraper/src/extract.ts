@@ -4,16 +4,17 @@ const anthropic = new Anthropic();
 
 type Selectors = { price: string; title: string };
 
-const EXTRACTION_PROMPT = `You are analyzing an ecommerce product page HTML. Extract the most stable CSS selectors for the product title and price.
+const EXTRACTION_PROMPT = `You are analyzing an ecommerce product page HTML to find CSS selectors for the product title and price.
 
 Rules:
-- Prefer selectors using data attributes, IDs, or semantic class names over positional selectors.
-- The price selector should target the CURRENT/MAIN price, not crossed-out original prices or installment prices.
-- The title selector should target the main product heading.
-- Return ONLY valid JSON, no explanation.
+- Prefer selectors using data attributes, IDs, or semantic class names.
+- The price selector should target the CURRENT/MAIN price element, not crossed-out original prices, installment prices, or shipping costs.
+- The title selector should target the main product heading (h1, or the most prominent product name).
+- For MercadoLibre: price is usually in a .andes-money-amount__fraction element, title in an h1.ui-pdp-title.
+- Return ONLY a JSON object on a single line, no markdown, no explanation, no code blocks.
 
-Return format:
-{"price": "css selector for price", "title": "css selector for title"}`;
+You MUST respond with exactly this format:
+{"price": "your css selector", "title": "your css selector"}`;
 
 export async function extractSelectors(
   html: string,
@@ -30,7 +31,7 @@ export async function extractSelectors(
     messages: [
       {
         role: "user",
-        content: `${EXTRACTION_PROMPT}\n\nHTML:\n${html.slice(0, 50000)}`,
+        content: `${EXTRACTION_PROMPT}\n\nHTML (truncated):\n${html.slice(0, 60000)}`,
       },
     ],
   });
@@ -38,12 +39,17 @@ export async function extractSelectors(
   const text =
     response.content[0].type === "text" ? response.content[0].text : "";
 
-  const match = text.match(/\{[\s\S]*?\}/);
-  if (!match) throw new Error("Failed to parse selector JSON from Claude");
+  console.log("Claude raw response:", text.slice(0, 500));
 
-  const parsed = JSON.parse(match[0]) as Selectors;
+  // Find JSON object containing both "price" and "title" keys
+  const jsonMatches = text.match(/\{[^{}]*"price"[^{}]*"title"[^{}]*\}|\{[^{}]*"title"[^{}]*"price"[^{}]*\}/);
+  if (!jsonMatches) {
+    throw new Error(`Failed to parse selector JSON from Claude. Response: ${text.slice(0, 200)}`);
+  }
+
+  const parsed = JSON.parse(jsonMatches[0]) as Selectors;
   if (!parsed.price || !parsed.title) {
-    throw new Error("Missing price or title selector in Claude response");
+    throw new Error(`Missing price or title in Claude response: ${jsonMatches[0]}`);
   }
 
   return parsed;

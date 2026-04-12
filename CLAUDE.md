@@ -46,7 +46,7 @@ antihot/
 
 ## User flow
 
-1. Land on homepage → auto-sign-in anonymously (no account needed).
+1. Land on homepage → click "Empezar sin cuenta" (anonymous) or "Tengo cuenta" (Google OAuth).
 2. Paste a product URL (Fravega, Cetrogar, Naldo, etc. — MercadoLibre not yet supported).
 3. Optional: click "Vincular cuenta" in dashboard to upgrade to Google for cross-device persistence.
 4. Fast path: plain HTTP fetch → extract structured data (JSON-LD, `__NEXT_DATA__`, inline Schema.org). No Playwright or Claude needed for most sites.

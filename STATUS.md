@@ -37,7 +37,7 @@
 - Hero headline ("Descuento o verso?") with accent-colored "verso?"
 - Mobile: compact demo card above the fold, centered stacked layout
 - Desktop: side-by-side copy + full demo card
-- Auto-anonymous-signin on page load, "No hace falta cuenta" subtitle
+- Dual CTA buttons: "Empezar sin cuenta" (anonymous) + "Tengo cuenta" (Google OAuth)
 - Full WCAG focus-visible indicators, semantic HTML, aria-labels
 
 ### Dashboard

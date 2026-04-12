@@ -8,36 +8,27 @@ export function Landing() {
   const { isAuthenticated, isLoading } = useConvexAuth();
   const navigate = useNavigate();
   const [signingIn, setSigningIn] = useState(false);
-  // Track if user was authenticated on initial load (existing session)
-  const [wasAuthOnMount, setWasAuthOnMount] = useState<boolean | null>(null);
 
-  // Capture initial auth state once loading completes
+  // If already authenticated (existing session in localStorage), go to dashboard
   useEffect(() => {
-    if (!isLoading && wasAuthOnMount === null) {
-      setWasAuthOnMount(isAuthenticated);
-    }
-  }, [isLoading, isAuthenticated, wasAuthOnMount]);
-
-  // Only auto-redirect if user arrived already authenticated (existing session)
-  // Don't redirect after fresh anonymous sign-in to avoid race conditions
-  useEffect(() => {
-    if (wasAuthOnMount === true) {
+    if (!isLoading && isAuthenticated) {
       navigate({ to: "/dashboard" });
     }
-  }, [wasAuthOnMount, navigate]);
+  }, [isLoading, isAuthenticated, navigate]);
 
-  // Auto sign-in anonymously for new users
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated && !signingIn) {
-      setSigningIn(true);
-      void signIn("anonymous").finally(() => {
-        setSigningIn(false);
-      });
+  async function handleStart() {
+    if (isAuthenticated) {
+      navigate({ to: "/dashboard" });
+      return;
     }
-  }, [isLoading, isAuthenticated, signingIn, signIn]);
 
-  function handleStart() {
-    navigate({ to: "/dashboard" });
+    setSigningIn(true);
+    try {
+      await signIn("anonymous");
+      navigate({ to: "/dashboard" });
+    } finally {
+      setSigningIn(false);
+    }
   }
 
   return (

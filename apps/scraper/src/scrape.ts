@@ -154,6 +154,7 @@ async function extractWithSelectors(
 export async function scrape(
   url: string,
   cachedSelectors: Selectors | null,
+  options?: { structuredDataOnly?: boolean },
 ): Promise<ScrapeResult> {
   // 0. MercadoLibre: not supported — blocks headless browsers and API requires user OAuth
   if (isMercadoLibreUrl(url)) {
@@ -184,9 +185,17 @@ export async function scrape(
         selectorsSource: "jsonld",
       };
     }
-    console.log("No structured data in static HTML, falling back to Playwright");
+    console.log("No structured data in static HTML");
+    if (options?.structuredDataOnly) {
+      throw new Error("No structured data available (cron mode)");
+    }
+    console.log("Falling back to Playwright");
   } catch (error) {
-    console.log("Fast fetch failed, falling back to Playwright:", error);
+    console.log("Fast fetch failed:", error);
+    if (options?.structuredDataOnly) {
+      throw new Error("Fast fetch failed (cron mode)");
+    }
+    console.log("Falling back to Playwright");
   }
 
   // 2. Slow path: Playwright for JS-rendered pages

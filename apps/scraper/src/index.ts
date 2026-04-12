@@ -38,6 +38,7 @@ app.post("/scrape", async (c) => {
   const body = await c.req.json<{
     url: string;
     selectors: { price: string; title: string } | null;
+    structuredDataOnly?: boolean;
   }>();
 
   if (!body.url) {
@@ -45,7 +46,9 @@ app.post("/scrape", async (c) => {
   }
 
   try {
-    const result = await scrape(body.url, body.selectors);
+    const result = await scrape(body.url, body.selectors, {
+      structuredDataOnly: body.structuredDataOnly,
+    });
     return c.json(result);
   } catch (error) {
     console.error("Scrape error:", error);

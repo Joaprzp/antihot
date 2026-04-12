@@ -64,20 +64,29 @@ export async function verifyPrice(
           '[class*="pago" i]',
           '[class*="financing" i]',
           '[class*="financiacion" i]',
+          '[class*="tax" i]',
+          '[class*="impuesto" i]',
+          '[class*="without-tax" i]',
+          '[class*="sin-iva" i]',
         ];
 
         function isInsideExcluded(el: Element): boolean {
           for (const pattern of excludePatterns) {
             if (el.closest(pattern)) return true;
           }
-          // Also check text context — skip if near "cuota" or "x" multiplier
+          // Check text context — skip installments and pre-tax prices
           const parent = el.parentElement;
           if (parent) {
             const parentText = parent.textContent?.toLowerCase() ?? "";
             if (
               parentText.includes("cuota") ||
               parentText.includes("x $") ||
-              parentText.includes("por mes")
+              parentText.includes("por mes") ||
+              parentText.includes("sin impuestos") ||
+              parentText.includes("sin iva") ||
+              parentText.includes("sin imp") ||
+              parentText.includes("ex iva") ||
+              parentText.includes("neto")
             ) {
               return true;
             }

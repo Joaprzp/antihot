@@ -1,5 +1,9 @@
-import { chromium, type Page } from "playwright";
+import { chromium } from "playwright-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
+import type { Page } from "playwright";
 import { extractSelectors } from "./extract";
+
+chromium.use(StealthPlugin());
 
 type Selectors = { price: string; title: string };
 
@@ -116,18 +120,34 @@ export async function scrape(
 
   // 2. Slow path: Playwright for JS-rendered pages
   const browser = await chromium.launch({
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    headless: true,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      "--disable-blink-features=AutomationControlled",
+    ],
   });
 
   try {
     const context = await browser.newContext({
-      userAgent:
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
       locale: "es-AR",
       timezoneId: "America/Argentina/Buenos_Aires",
+      viewport: { width: 1280, height: 720 },
     });
 
     const page = await context.newPage();
+
+    // Block unnecessary resources for speed
+    await page.route("**/*", (route) => {
+      const type = route.request().resourceType();
+      if (["image", "font", "media"].includes(type)) {
+        return route.abort();
+      }
+      return route.continue();
+    });
+
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
 
     // Wait for real content — try common product page signals

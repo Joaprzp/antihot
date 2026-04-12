@@ -92,20 +92,11 @@ export async function scrape(
   url: string,
   cachedSelectors: Selectors | null,
 ): Promise<ScrapeResult> {
-  // 0. MercadoLibre: use their API directly (bypasses bot detection)
+  // 0. MercadoLibre: not supported — blocks headless browsers and API requires user OAuth
   if (isMercadoLibreUrl(url)) {
-    try {
-      const meliResult = await scrapeFromMeliApi(url);
-      if (meliResult) {
-        return {
-          ...meliResult,
-          selectors: { price: "meli-api", title: "meli-api" },
-          selectorsSource: "jsonld", // treat as structured data
-        };
-      }
-    } catch (error) {
-      console.log("ML API failed, falling back to generic scraping:", error);
-    }
+    throw new Error(
+      "MercadoLibre no está soportado todavía. Probá con Fravega, Cetrogar, Naldo u otras tiendas.",
+    );
   }
 
   // 1. Fast path: try plain HTTP fetch + JSON-LD (no Playwright needed)

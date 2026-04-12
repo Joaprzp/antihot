@@ -8,13 +8,23 @@ export function Landing() {
   const { isAuthenticated, isLoading } = useConvexAuth();
   const navigate = useNavigate();
   const [signingIn, setSigningIn] = useState(false);
+  // Track if user was authenticated on initial load (existing session)
+  const [wasAuthOnMount, setWasAuthOnMount] = useState<boolean | null>(null);
 
-  // Redirect if already authenticated (existing session)
+  // Capture initial auth state once loading completes
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    if (!isLoading && wasAuthOnMount === null) {
+      setWasAuthOnMount(isAuthenticated);
+    }
+  }, [isLoading, isAuthenticated, wasAuthOnMount]);
+
+  // Only auto-redirect if user arrived already authenticated (existing session)
+  // Don't redirect after fresh anonymous sign-in to avoid race conditions
+  useEffect(() => {
+    if (wasAuthOnMount === true) {
       navigate({ to: "/dashboard" });
     }
-  }, [isLoading, isAuthenticated, navigate]);
+  }, [wasAuthOnMount, navigate]);
 
   // Auto sign-in anonymously for new users
   useEffect(() => {

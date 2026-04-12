@@ -12,7 +12,7 @@ type ScrapeResult = {
   title: string;
   price: number;
   selectors: Selectors;
-  selectorsSource: "jsonld" | "cache" | "haiku" | "sonnet";
+  selectorsSource: "jsonld" | "cache" | "haiku";
 };
 
 function parsePrice(text: string): number {
@@ -250,31 +250,18 @@ export async function scrape(
       console.log(`Cached selectors failed for ${url}`);
     }
 
-    // Claude Haiku
+    // Claude Haiku — last resort
     console.log(`Page HTML length: ${renderedHtml.length}, URL: ${url}`);
-    try {
-      const selectors = await extractSelectors(renderedHtml, "haiku");
-      console.log("Haiku selectors:", JSON.stringify(selectors));
-      const result = await extractWithSelectors(page, selectors);
-      if (result) {
-        console.log("Haiku succeeded:", result.title, result.price);
-        return { ...result, selectors, selectorsSource: "haiku" };
-      }
-      console.log("Haiku selectors didn't match");
-    } catch (error) {
-      console.log("Haiku failed, trying Sonnet:", error);
-    }
-
-    // Claude Sonnet fallback
-    const selectors = await extractSelectors(renderedHtml, "sonnet");
-    console.log("Sonnet selectors:", JSON.stringify(selectors));
+    const selectors = await extractSelectors(renderedHtml);
+    console.log("Haiku selectors:", JSON.stringify(selectors));
     const result = await extractWithSelectors(page, selectors);
     if (!result) {
-      console.log("Sonnet also failed. Page title:", await page.title());
-      throw new Error("Failed to extract price/title even with Sonnet");
+      console.log("Haiku selectors didn't match. Page title:", await page.title());
+      throw new Error("Failed to extract price/title");
     }
 
-    return { ...result, selectors, selectorsSource: "sonnet" };
+    console.log("Haiku succeeded:", result.title, result.price);
+    return { ...result, selectors, selectorsSource: "haiku" };
   } finally {
     await browser.close();
   }

@@ -47,7 +47,7 @@ export const scrapeProduct = internalAction({
         title: string;
         price: number;
         selectors: { price: string; title: string };
-        selectorsSource: "jsonld" | "cache" | "haiku" | "sonnet";
+        selectorsSource: "jsonld" | "cache" | "haiku";
       };
 
       // Cache selectors if they were freshly extracted via Claude (not jsonld or cache)

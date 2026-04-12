@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { scrape } from "./scrape";
+import { verifyPrice } from "./verify";
 
 const app = new Hono();
 
@@ -22,6 +23,28 @@ app.post("/scrape", async (c) => {
     console.error("Scrape error:", error);
     return c.json(
       { error: error instanceof Error ? error.message : "Scrape failed" },
+      500,
+    );
+  }
+});
+
+app.post("/verify-price", async (c) => {
+  const body = await c.req.json<{
+    url: string;
+    knownPrice: number;
+  }>();
+
+  if (!body.url || !body.knownPrice) {
+    return c.json({ error: "url and knownPrice are required" }, 400);
+  }
+
+  try {
+    const result = await verifyPrice(body.url, body.knownPrice);
+    return c.json(result);
+  } catch (error) {
+    console.error("Verify error:", error);
+    return c.json(
+      { error: error instanceof Error ? error.message : "Verify failed" },
       500,
     );
   }

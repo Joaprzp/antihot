@@ -59,6 +59,26 @@ export const saveScrapeResult = internalMutation({
   },
 });
 
+export const updateSnapshotPrice = internalMutation({
+  args: {
+    productId: v.id("products"),
+    phase: v.union(v.literal("before"), v.literal("hotsale")),
+    newPrice: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const snapshot = await ctx.db
+      .query("snapshots")
+      .withIndex("by_productId_and_phase", (q) =>
+        q.eq("productId", args.productId).eq("phase", args.phase),
+      )
+      .first();
+
+    if (snapshot) {
+      await ctx.db.patch(snapshot._id, { price: args.newPrice });
+    }
+  },
+});
+
 export const markScrapeError = internalMutation({
   args: {
     productId: v.id("products"),

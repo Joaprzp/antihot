@@ -24,7 +24,6 @@ export const scrapeProduct = internalAction({
       return;
     }
 
-    // Check domain selector cache
     const cached = await ctx.runQuery(internal.scraping.getCachedSelectors, {
       domain: args.store,
     });
@@ -50,7 +49,6 @@ export const scrapeProduct = internalAction({
         selectorsSource: "jsonld" | "cache" | "haiku";
       };
 
-      // Cache selectors if they were freshly extracted via Claude (not jsonld or cache)
       if (
         result.selectorsSource !== "cache" &&
         result.selectorsSource !== "jsonld"
@@ -61,18 +59,80 @@ export const scrapeProduct = internalAction({
         });
       }
 
-      // Save the scrape result
       await ctx.runMutation(internal.scraping.saveScrapeResult, {
         productId: args.productId,
         title: result.title,
         price: result.price,
         phase: args.phase,
       });
+
+      // Schedule background price verification via Playwright
+      // Only for structured data scrapes where the price might be the list price
+      if (result.selectorsSource === "jsonld") {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.scrapeAction.verifyProductPrice,
+          {
+            productId: args.productId,
+            url: args.url,
+            knownPrice: result.price,
+            phase: args.phase,
+          },
+        );
+      }
     } catch (error) {
       console.error("Scrape failed:", error);
       await ctx.runMutation(internal.scraping.markScrapeError, {
         productId: args.productId,
       });
+    }
+  },
+});
+
+export const verifyProductPrice = internalAction({
+  args: {
+    productId: v.id("products"),
+    url: v.string(),
+    knownPrice: v.number(),
+    phase: v.union(v.literal("before"), v.literal("hotsale")),
+  },
+  handler: async (ctx, args) => {
+    const scraperUrl: string | undefined = env.SCRAPER_URL;
+    if (!scraperUrl) return;
+
+    try {
+      const response = await fetch(`${scraperUrl}/verify-price`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: args.url,
+          knownPrice: args.knownPrice,
+        }),
+      });
+
+      if (!response.ok) {
+        console.log(`Verify returned ${response.status}, skipping`);
+        return;
+      }
+
+      const result = (await response.json()) as {
+        verifiedPrice: number;
+        found: boolean;
+      };
+
+      if (result.found && result.verifiedPrice < args.knownPrice) {
+        console.log(
+          `Price verified lower: ${result.verifiedPrice} < ${args.knownPrice}, updating snapshot`,
+        );
+        await ctx.runMutation(internal.scraping.updateSnapshotPrice, {
+          productId: args.productId,
+          phase: args.phase,
+          newPrice: result.verifiedPrice,
+        });
+      }
+    } catch (error) {
+      // Non-critical — the structured data price is still valid
+      console.log("Price verification failed (non-critical):", error);
     }
   },
 });

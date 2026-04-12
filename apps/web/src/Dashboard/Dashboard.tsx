@@ -105,6 +105,10 @@ export function Dashboard() {
   }
 
   const sorted = [...(products ?? [])].sort((a, b) => {
+    // Pending/error products always first
+    if (a.status === "pending" && b.status !== "pending") return -1;
+    if (b.status === "pending" && a.status !== "pending") return 1;
+
     const dir = sortOrder === "desc" ? -1 : 1;
     if (sortField === "price") {
       return ((a.priceBefore ?? 0) - (b.priceBefore ?? 0)) * dir;
@@ -201,7 +205,6 @@ export function Dashboard() {
               <div
                 key={i}
                 className="animate-fade-in"
-                style={{ animationDelay: `${i * 150}ms` }}
               >
                 <SkeletonCard />
               </div>
@@ -218,12 +221,10 @@ export function Dashboard() {
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {adding && <SkeletonCard />}
-            {sorted.map((product, i) => (
+            {sorted.map((product) => (
               <div
                 key={product._id}
                 className="animate-fade-in"
-                style={{ animationDelay: `${i * 150}ms` }}
               >
                 <ProductCard product={product} />
               </div>

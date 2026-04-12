@@ -44,7 +44,10 @@
 - Empty state ("SIN PRODUCTOS")
 - Delayed loading skeleton (300ms grace period to avoid flash on fast responses)
 - Staggered fade-in animation on cards and skeletons (Nothing-spec easing)
-- Optimistic skeleton card while adding a product
+- Background Playwright price verification — async pass after structured data scrape checks for lower visible price (discount/promo), excludes installments and pre-tax amounts, silently updates snapshot if found
+- Equal height product cards across all states (pending, error, scraped)
+- Shrinking URL input bar on scroll (width + height animate down)
+- Cafecito donation button on landing footer and dashboard nav
 
 ### Scraper service
 - `apps/scraper/` — Hono server with `POST /scrape` and `GET /health`
@@ -57,9 +60,11 @@
 - Env vars: `ANTHROPIC_API_KEY`, `MELI_CLIENT_ID`, `MELI_CLIENT_SECRET` on Railway; `SCRAPER_URL` on Convex
 
 ### Tested ecommerce sites
-- **Fravega** — works via `__NEXT_DATA__` structured data (some products) or JSON-LD
+- **Fravega** — works via `__NEXT_DATA__` structured data
 - **Cetrogar** — works via JSON-LD structured data
 - **Naldo** — works via JSON-LD structured data
+- **Jumbo** — works via structured data (JS-rendered, Playwright fallback)
+- **Kitart** — works via structured data
 - **MercadoLibre** — not supported (bot detection + API auth wall)
 
 ---
@@ -67,9 +72,12 @@
 ## Next up
 
 ### HotSale cron job
-- Convex scheduled function to re-scrape all products
+- Convex scheduled function to re-scrape all products on HotSale night
+- **Structured data only** — no Playwright verify on cron (the price change in structured data IS the comparison)
+- **URL dedup** — same URL tracked by multiple users → scrape once, write snapshot to all
+- **Staggered batches** — 100 products per batch, rate-limited per domain
 - Writes `hotsale` phase snapshots
-- Uses same extraction priority (structured data → cache → Haiku)
+- Scale target: 15,000 products (3,000 users × 5) in ~5 minutes
 
 ### Remaining UI work
 - User avatar: show real initials/photo from Google profile instead of hardcoded "JP"

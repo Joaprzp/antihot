@@ -78,6 +78,13 @@ export function Dashboard() {
   const addProduct = useMutation(api.products.add);
   const [url, setUrl] = useState("");
   const [adding, setAdding] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   function setSort(field: SortField, order: SortOrder) {
     navigate({ search: { sort: field, order } });
@@ -171,22 +178,34 @@ export function Dashboard() {
 
       {/* Input */}
       <div className="sticky top-14 z-10">
-        <div className="mx-auto flex max-w-6xl items-center gap-3 px-6 py-3">
-          <div className="flex flex-1 items-center rounded-full border border-[#E8E8E8] bg-[#FFFFFF] px-4 py-2.5 transition-colors focus-within:border-[#000000]">
-            <Icon icon={Link01Icon} size={16} className="text-[#999999]" />
+        <div
+          className={`mx-auto flex items-center gap-3 px-6 transition-all duration-200 ${
+            scrolled ? "max-w-2xl py-1.5" : "max-w-6xl py-3"
+          }`}
+        >
+          <div
+            className={`flex flex-1 items-center rounded-full border border-[#E8E8E8] bg-[#FFFFFF] transition-all duration-200 focus-within:border-[#000000] ${
+              scrolled ? "px-3 py-1.5" : "px-4 py-2.5"
+            }`}
+          >
+            <Icon icon={Link01Icon} size={scrolled ? 14 : 16} className="text-[#999999]" />
             <input
               type="text"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
               placeholder="Pegá la URL del producto..."
-              className="ml-2.5 flex-1 bg-transparent text-[14px] text-[#1A1A1A] outline-none placeholder:text-[#999999]"
+              className={`ml-2.5 flex-1 bg-transparent text-[#1A1A1A] outline-none transition-all duration-200 placeholder:text-[#999999] ${
+                scrolled ? "text-[12px]" : "text-[14px]"
+              }`}
             />
           </div>
           <button
             onClick={handleAdd}
             disabled={adding || !url.trim()}
-            className="font-nothing-mono inline-flex h-10 items-center rounded-full bg-[#000000] px-5 text-[12px] uppercase tracking-[0.06em] text-[#F5F5F5] transition-colors hover:bg-[#1A1A1A] disabled:opacity-40"
+            className={`font-nothing-mono inline-flex items-center rounded-full bg-[#000000] uppercase tracking-[0.06em] text-[#F5F5F5] transition-all duration-200 hover:bg-[#1A1A1A] disabled:opacity-40 ${
+              scrolled ? "h-8 px-4 text-[11px]" : "h-10 px-5 text-[12px]"
+            }`}
           >
             {adding ? "AGREGANDO..." : "AGREGAR"}
           </button>
@@ -299,14 +318,14 @@ function ProductCard({ product }: { product: Product }) {
 
   if (product.status === "pending") {
     return (
-      <div className="overflow-hidden rounded-xl border border-[#E8E8E8] bg-[#FFFFFF]">
+      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-[#E8E8E8] bg-[#FFFFFF]">
         <div className="border-b border-[#E8E8E8] px-5 py-4">
           <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
             {product.store}
           </p>
           <div className="mt-2 h-4 w-48 animate-pulse rounded bg-[#E8E8E8]" />
         </div>
-        <div className="px-5 py-4">
+        <div className="flex-1 px-5 py-4">
           <div className="h-3 w-20 animate-pulse rounded bg-[#E8E8E8]" />
           <div className="mt-3 h-6 w-32 animate-pulse rounded bg-[#E8E8E8]" />
           <p className="font-nothing-mono mt-3 text-[11px] tracking-[0.08em] text-[#999999]">
@@ -319,16 +338,26 @@ function ProductCard({ product }: { product: Product }) {
 
   if (product.status === "error") {
     return (
-      <div className="overflow-hidden rounded-xl border border-[#E8E8E8] bg-[#FFFFFF]">
+      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-[#E8E8E8] bg-[#FFFFFF]">
         <div className="border-b border-[#E8E8E8] px-5 py-4">
-          <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
-            {product.store}
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+              {product.store}
+            </p>
+            <a
+              href={product.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999] transition-colors hover:text-[#000000]"
+            >
+              Ver página
+            </a>
+          </div>
           <p className="mt-1.5 text-[15px] font-medium leading-snug text-[#1A1A1A]">
             {product.title ?? "Producto"}
           </p>
         </div>
-        <div className="px-5 py-4">
+        <div className="flex-1 px-5 py-4">
           <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#D71921]">
             ERROR: NO SE PUDO LEER
           </p>
@@ -338,7 +367,7 @@ function ProductCard({ product }: { product: Product }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-[#E8E8E8] bg-[#FFFFFF]">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-[#E8E8E8] bg-[#FFFFFF]">
       {/* Header */}
       <div className="border-b border-[#E8E8E8] px-5 py-4">
         <div className="flex items-center justify-between">
@@ -411,7 +440,7 @@ function ProductCard({ product }: { product: Product }) {
           </div>
         </>
       ) : (
-        <div className="px-5 py-4">
+        <div className="flex-1 px-5 py-4">
           <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
             PRECIO REGISTRADO
           </p>
@@ -438,12 +467,12 @@ function ProductCard({ product }: { product: Product }) {
 
 function SkeletonCard() {
   return (
-    <div className="overflow-hidden rounded-xl border border-[#E8E8E8] bg-[#FFFFFF]">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-[#E8E8E8] bg-[#FFFFFF]">
       <div className="border-b border-[#E8E8E8] px-5 py-4">
         <div className="h-3 w-24 animate-pulse rounded bg-[#E8E8E8]" />
         <div className="mt-3 h-4 w-48 animate-pulse rounded bg-[#E8E8E8]" />
       </div>
-      <div className="px-5 py-4">
+      <div className="flex-1 px-5 py-4">
         <div className="h-3 w-20 animate-pulse rounded bg-[#E8E8E8]" />
         <div className="mt-3 h-6 w-32 animate-pulse rounded bg-[#E8E8E8]" />
         <div className="mt-2 h-3 w-16 animate-pulse rounded bg-[#E8E8E8]" />

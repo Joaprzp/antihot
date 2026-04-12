@@ -56,6 +56,20 @@ Bun + React 19 + Vite 8 + Convex + TanStack Router + Tailwind 4 + Radix UI. Scra
 
 ---
 
+## Cron del HotSale — estrategia de escala
+
+El cron del HotSale re-scrapea todos los productos registrados la noche del evento.
+
+**Optimizaciones:**
+1. **Solo datos estructurados** — no se usa Playwright ni Claude en el re-scrape. El cambio en el precio de datos estructurados ES la comparación.
+2. **Dedup por URL** — si múltiples usuarios trackean el mismo producto, se scrapea una sola vez y se escribe el snapshot a todos.
+3. **Batches escalonados** — 100 productos por batch, rate-limited por dominio para no saturar las tiendas.
+4. **Sin verificación de precio** — el Playwright verify es para el scrape inicial (encontrar descuentos). En HotSale night no es necesario.
+
+**Proyección a escala:** 3.000 usuarios × 5 productos = 15.000 productos. Con datos estructurados (~1-2s cada uno, 50 concurrentes) se resuelve en ~5 minutos. Costo de Claude: cero. Costo de Railway: mínimo (solo HTTP fetches, sin Chromium).
+
+---
+
 ## MVP — fuera de scope
 
 - Historial de precios más allá de las dos fechas (pre y durante HotSale).

@@ -52,15 +52,31 @@ antihot/
 3. Fast path: plain HTTP fetch → extract structured data (JSON-LD, `__NEXT_DATA__`, inline Schema.org). No Playwright or Claude needed for most sites.
 4. Slow path (if no structured data): Playwright (with stealth plugin) renders page → try cached CSS selectors → if miss, Claude Haiku extracts selectors → cached per domain for all users.
 5. Product appears in dashboard with name, price, date, and "Ver página" link.
-6. Cron re-scrapes all products on HotSale night.
-7. Dashboard shows delta: ✅ bajó / ⚠️ subió / ➖ igual.
+6. Background: Playwright verify pass checks for a lower visible price (discount, promo) and silently updates the snapshot if found.
+7. Cron re-scrapes all products on HotSale night (structured data only, no Playwright verify — the structured data delta IS the comparison).
+8. Dashboard shows delta: ✅ bajó / ⚠️ subió / ➖ igual.
 
 ### Scraping extraction priority
 
-1. **Structured data** (JSON-LD `<script>` tags, Next.js `__NEXT_DATA__`, inline `@type:Product` patterns) — free, fast, no Playwright.
-2. **Cached CSS selectors** — from `selectorsCache` table, keyed by domain.
-3. **Claude Haiku** (`claude-haiku-4-5-20251001`) — extracts selectors from rendered HTML. Cached per domain for all users.
-4. Cost scales by number of **unique stores without structured data**, not by users or products. Most ecommerce sites have structured data → zero Claude calls.
+**Initial scrape (user adds product):**
+1. **MercadoLibre API** — direct API call (not yet supported, requires user OAuth).
+2. **Structured data** (JSON-LD `<script>` tags, Next.js `__NEXT_DATA__`, inline `@type:Product` patterns) — free, fast, no Playwright.
+3. **Cached CSS selectors** — from `selectorsCache` table, keyed by domain.
+4. **Claude Haiku** (`claude-haiku-4-5-20251001`) — extracts selectors from rendered HTML. Cached per domain for all users.
+5. **Background Playwright verify** — async pass after structured data scrape to check for a lower visible price (discounts, promos). Excludes installment amounts and pre-tax prices.
+
+**HotSale cron re-scrape:**
+- Structured data only (fast path). No Playwright verify — the structured data price change IS what we're measuring.
+- URL dedup: if multiple users track the same URL, scrape once and write the snapshot to all products.
+- Staggered batches (100 at a time, rate-limited per domain) to avoid hammering stores.
+
+### Scale projections
+
+At 3,000 users × 5 products = 15,000 products on HotSale night:
+- **Fast path** (structured data): ~1-2s each, 50 concurrent → ~5 min total.
+- **No Playwright** on cron night → Railway load is minimal (just HTTP fetches).
+- **URL dedup** reduces actual scrapes significantly (many users track the same popular products).
+- Cost: zero Claude calls (all structured data). Railway cost: negligible (no Chromium on cron night).
 
 ## Code conventions
 

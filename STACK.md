@@ -12,11 +12,7 @@
 | Routing | TanStack Router v1 |
 | Validation | Zod |
 | Styling | Tailwind 4 |
-| Primitives | Radix UI |
-| Variants | CVA (class-variance-authority) |
-| Class utils | clsx + tailwind-merge (`cn()`) |
 | Icons | Hugeicons (free) |
-| Global State | Zustand |
 | Auth | Convex Auth (Google OAuth) |
 | Scraper HTTP | Hono |
 | Browser Automation | Playwright (Chromium headless) |
@@ -30,15 +26,13 @@
 - **Screaming architecture** — domain-driven folder structure (e.g. `/Dashboard`, `/Landing`, `/Auth`, `/Shared`)
 - **PascalCase** for all files and folders (except Convex-required lowercase: `crons.ts`, `http.ts`, `schema.ts`)
 - **Bun exclusively** — never `npx`, `npm`, or `pnpm`. Always `bun`, `bunx`, `bun run`, `bun add`.
-- **Zustand** for global app state (auth session, current user, etc.)
-- **TSR search params + Zod** for all URL-driven state (filters, pagination, tabs) — not Zustand
+- **TSR search params + Zod** for all URL-driven state (filters, pagination, tabs)
+- **Convex `useQuery`/`useMutation`** for server state. No client state library.
 - **Colors in OKLCH** — use `oklch()` for all custom color definitions. Tailwind 4 uses OKLCH natively. Never hex or HSL.
-- **Global design tokens** — defined in `apps/web/src/index.css` via `@theme inline`: `accent`, `surface`, `surface-raised`, `text-primary`, `text-secondary`, `text-muted`, `border`, `green`, `red`, `neutral` (with `-light` variants). Use these everywhere — never hardcode `text-white` or `bg-white/[0.0x]`.
-- **Accent color** — burnt red `oklch(0.55 0.22 27)`.
-- **Landing page** — single viewport, no scroll (`h-screen overflow-hidden`). Always light theme.
+- **Global design tokens** — defined in `apps/web/src/index.css` via `@theme inline`: `accent`, `accent-hover`, `surface`, `surface-raised`, `black`, `text-primary`, `text-secondary`, `text-muted`, `border`, `border-visible`, `green`, `green-light`. Use these everywhere — never hardcode hex.
+- **Accent color** — burnt red `oklch(0.5 0.2 25)`.
+- **Landing page** — single viewport, no scroll (`h-[100dvh] overflow-hidden`). Always light theme.
 - **One accent color per view** rule
-- **Radix UI** for accessible interactive primitives (dialogs, popovers, tooltips, dropdowns). No component library — build purpose-built components for the domain.
-- **CVA** for component variants. `cn()` (clsx + twMerge) for conditional classes.
 - **Icons** — Hugeicons free (`@hugeicons/react` + `@hugeicons/core-free-icons`), tree-shakeable, import only what you use. Never icon fonts or SVG sprites. Use the project's `<Icon />` wrapper — never use `<HugeiconsIcon>` directly in feature code:
 
   ```tsx
@@ -73,7 +67,7 @@
 
   <Icon icon={Search01Icon} size={16} className="text-text-secondary" />
   ```
-- **Fonts** — loaded via Fontsource with the **Latin Extended subset** (required for Spanish: á é í ó ú ü ñ ¿ ¡). Never Google Fonts CDN. Three families: **Playfair Display** (headings + landing display text, keep at large sizes), **Source Sans 3** (body text), **Geist Mono** (prices, numbers, fiscal data).
+- **Fonts** — loaded via Fontsource with the **Latin Extended subset** (required for Spanish: á é í ó ú ü ñ ¿ ¡). Never Google Fonts CDN. Two active families: **Source Sans 3** (body text, UI), **Geist Mono** (prices, numbers, labels). **Playfair Display** installed but reserved for future use.
 
 ## Localization
 

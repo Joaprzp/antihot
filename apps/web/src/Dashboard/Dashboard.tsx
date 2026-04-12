@@ -172,10 +172,10 @@ export function Dashboard() {
   return (
     <div className="flex min-h-[100dvh] flex-col bg-surface font-body">
       {/* Nav */}
-      <nav aria-label="Navegación principal">
+      <nav aria-label="Navegación principal" className="border-b border-border/40">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <span className="text-[15px] font-medium text-black">AntiHot</span>
+          <div className="flex items-center gap-4">
+            <span className="text-base font-semibold tracking-[-0.01em] text-black">AntiHot</span>
             <a
               href="https://cafecito.app/casilisto"
               rel="noopener noreferrer"
@@ -188,34 +188,36 @@ export function Dashboard() {
                 alt="Invitame un café en cafecito.app"
                 width={91}
                 height={24}
-                className="h-6 w-auto"
+                className="h-5 w-auto"
               />
             </a>
           </div>
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-3">
             <span className="hidden font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted sm:block">
               {productCount} {productCount === 1 ? "PRODUCTO" : "PRODUCTOS"}
             </span>
-            {user?.pictureUrl ? (
-              <img
-                src={user.pictureUrl}
-                alt={user.name ?? "Avatar"}
-                width={32}
-                height={32}
-                className="h-8 w-8 rounded-full"
-              />
-            ) : (
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black">
-                <span className="font-mono text-[11px] font-bold text-surface">
-                  {(user?.name ?? "?").slice(0, 2).toUpperCase()}
-                </span>
-              </div>
-            )}
             <button
               onClick={() => void signOut().then(() => navigate({ to: "/" }))}
-              className="font-mono min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-[11px] uppercase tracking-[0.08em] text-text-muted transition-colors hover:text-black focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded"
+              className="group flex items-center gap-2 rounded-full py-1 pl-1 pr-3 transition-colors hover:bg-border/50 focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
             >
-              Salir
+              {user?.pictureUrl ? (
+                <img
+                  src={user.pictureUrl}
+                  alt={user.name ?? "Avatar"}
+                  width={28}
+                  height={28}
+                  className="h-7 w-7 rounded-full"
+                />
+              ) : (
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-black">
+                  <span className="font-mono text-[10px] font-bold text-surface">
+                    {(user?.name ?? "?").slice(0, 2).toUpperCase()}
+                  </span>
+                </div>
+              )}
+              <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted transition-colors group-hover:text-black">
+                Salir
+              </span>
             </button>
           </div>
         </div>
@@ -404,7 +406,7 @@ function CardHeader({
           {confirmDelete ? (
             <button
               onClick={onDelete}
-              className="font-mono min-h-[44px] px-2 text-[11px] uppercase tracking-[0.08em] text-accent transition-colors animate-fade-in focus-visible:ring-2 focus-visible:ring-accent rounded"
+              className="font-mono min-h-[44px] inline-flex items-center px-1 text-[11px] uppercase tracking-[0.08em] text-accent transition-colors animate-fade-in hover:text-accent/70 focus-visible:ring-2 focus-visible:ring-accent rounded"
             >
               Confirmar
             </button>
@@ -429,7 +431,7 @@ function CardHeader({
           )}
         </div>
       </div>
-      <p className="mt-1.5 flex items-center gap-1.5 overflow-hidden text-[16px] font-semibold leading-snug text-text-primary">
+      <p className="mt-2 flex items-center gap-1.5 overflow-hidden text-[16px] font-semibold leading-snug text-text-primary">
         <span
           className="min-w-0 shrink overflow-hidden whitespace-nowrap"
           style={{ textOverflow: "clip" }}
@@ -441,7 +443,7 @@ function CardHeader({
             href={product.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="shrink-0 rounded bg-border px-1.5 py-0.5 text-[10px] font-normal leading-none text-text-muted transition-colors hover:bg-border-visible focus-visible:ring-2 focus-visible:ring-black"
+            className="shrink-0 rounded-full bg-border px-1.5 py-0.5 text-[10px] font-normal leading-none text-text-muted transition-colors hover:bg-border-visible focus-visible:ring-2 focus-visible:ring-black"
           >
             ···
           </a>
@@ -466,16 +468,16 @@ function ProductCard({
 
   if (product.status === "pending") {
     return (
-      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface-raised">
+      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface-raised transition-colors duration-200 hover:border-border-visible">
         <div className="border-b border-border px-5 py-4">
           <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
             {product.store}
           </span>
-          <div className="mt-2 h-4 w-48 animate-pulse rounded bg-border" />
+          <div className="mt-2 h-5 w-48 animate-pulse rounded-sm bg-border" />
         </div>
         <div className="flex-1 px-5 py-4">
-          <div className="h-3 w-20 animate-pulse rounded bg-border" />
-          <div className="mt-3 h-6 w-32 animate-pulse rounded bg-border" />
+          <div className="h-3 w-20 animate-pulse rounded-sm bg-border" />
+          <div className="mt-2 h-6 w-32 animate-pulse rounded-sm bg-border" />
         </div>
       </div>
     );
@@ -483,7 +485,7 @@ function ProductCard({
 
   if (product.status === "error") {
     return (
-      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface-raised">
+      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface-raised transition-colors duration-200 hover:border-border-visible">
         <CardHeader product={product} onDelete={onDelete} />
         <div className="flex-1 px-5 py-4">
           <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-accent">
@@ -495,7 +497,7 @@ function ProductCard({
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface-raised">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface-raised transition-colors duration-200 hover:border-border-visible">
       <CardHeader product={product} onDelete={onDelete} />
 
       {hasBothPrices ? (
@@ -505,7 +507,7 @@ function ProductCard({
               <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
                 ANTES
               </span>
-              <p className="font-mono mt-2 text-[16px] font-bold tracking-[-0.02em] text-text-primary sm:text-[20px]">
+              <p className="font-mono mt-2 text-[16px] font-bold tabular-nums tracking-[-0.02em] text-text-primary sm:text-[20px]">
                 {formatPrice(product.priceBefore!)}
               </p>
               <span className="font-mono mt-1 block text-[11px] tracking-[0.08em] text-text-muted">
@@ -516,7 +518,7 @@ function ProductCard({
               <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
                 HOTSALE
               </span>
-              <p className="font-mono mt-2 text-[16px] font-bold tracking-[-0.02em] text-text-primary sm:text-[20px]">
+              <p className="font-mono mt-2 text-[16px] font-bold tabular-nums tracking-[-0.02em] text-text-primary sm:text-[20px]">
                 {formatPrice(product.priceHotsale!)}
               </p>
               <span className="font-mono mt-1 block text-[11px] tracking-[0.08em] text-text-muted">
@@ -524,7 +526,7 @@ function ProductCard({
               </span>
             </div>
           </div>
-          <div className="flex items-center justify-between border-t border-border px-5 py-3">
+          <div className="flex items-center justify-between border-t border-border px-5 py-4">
             <p
               className={`text-[14px] font-medium ${
                 delta!.type === "up"
@@ -556,7 +558,7 @@ function ProductCard({
           </span>
           {product.priceBefore !== null ? (
             <>
-              <p className="font-mono mt-2 text-[16px] font-bold tracking-[-0.02em] text-text-primary sm:text-[20px]">
+              <p className="font-mono mt-2 text-[16px] font-bold tabular-nums tracking-[-0.02em] text-text-primary sm:text-[20px]">
                 {formatPrice(product.priceBefore)}
               </p>
               <span className="font-mono mt-1 block text-[11px] tracking-[0.08em] text-text-muted">
@@ -564,7 +566,7 @@ function ProductCard({
               </span>
             </>
           ) : (
-            <div className="mt-2 h-6 w-32 animate-pulse rounded bg-border" />
+            <div className="mt-2 h-6 w-32 animate-pulse rounded-sm bg-border" />
           )}
         </div>
       )}
@@ -576,13 +578,13 @@ function SkeletonCard() {
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface-raised">
       <div className="border-b border-border px-5 py-4">
-        <div className="h-3 w-24 animate-pulse rounded bg-border" />
-        <div className="mt-3 h-4 w-48 animate-pulse rounded bg-border" />
+        <div className="h-3 w-24 animate-pulse rounded-sm bg-border" />
+        <div className="mt-2 h-5 w-48 animate-pulse rounded-sm bg-border" />
       </div>
       <div className="flex-1 px-5 py-4">
-        <div className="h-3 w-20 animate-pulse rounded bg-border" />
-        <div className="mt-3 h-6 w-32 animate-pulse rounded bg-border" />
-        <div className="mt-2 h-3 w-16 animate-pulse rounded bg-border" />
+        <div className="h-3 w-20 animate-pulse rounded-sm bg-border" />
+        <div className="mt-2 h-6 w-32 animate-pulse rounded-sm bg-border" />
+        <div className="mt-2 h-3 w-16 animate-pulse rounded-sm bg-border" />
       </div>
     </div>
   );

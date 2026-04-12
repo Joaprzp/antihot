@@ -7,6 +7,13 @@ import { internal } from "./_generated/api";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const env = (globalThis as any).process?.env ?? {};
 
+function scraperHeaders(): Record<string, string> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const secret: string | undefined = env.SCRAPER_SECRET;
+  if (secret) headers["Authorization"] = `Bearer ${secret}`;
+  return headers;
+}
+
 export const scrapeProduct = internalAction({
   args: {
     productId: v.id("products"),
@@ -31,7 +38,7 @@ export const scrapeProduct = internalAction({
     try {
       const response = await fetch(`${scraperUrl}/scrape`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: scraperHeaders(),
         body: JSON.stringify({
           url: args.url,
           selectors: cached?.selectors ?? null,
@@ -85,8 +92,17 @@ export const scrapeProduct = internalAction({
       }
     } catch (error) {
       console.error("Scrape failed:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Error desconocido";
+      const raw = error instanceof Error ? error.message : "";
+      let errorMessage = "No se pudo leer el precio de esta página";
+      if (raw.includes("MercadoLibre")) {
+        errorMessage = "MercadoLibre no está soportado todavía";
+      } else if (raw.includes("URL inválida") || raw.includes("invalid")) {
+        errorMessage = "La URL ingresada no es válida";
+      } else if (raw.includes("timeout") || raw.includes("Timeout")) {
+        errorMessage = "La página tardó demasiado en cargar";
+      } else if (raw.includes("fetch failed")) {
+        errorMessage = "No se pudo conectar con el servidor de scraping";
+      }
       await ctx.runMutation(internal.scraping.markScrapeError, {
         productId: args.productId,
         errorMessage,
@@ -109,7 +125,7 @@ export const verifyProductPrice = internalAction({
     try {
       const response = await fetch(`${scraperUrl}/verify-price`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: scraperHeaders(),
         body: JSON.stringify({
           url: args.url,
           knownPrice: args.knownPrice,

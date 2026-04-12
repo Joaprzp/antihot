@@ -11,9 +11,8 @@
 - Vite 8 + React 19 + TypeScript strict + `@` path alias
 - TanStack Router v1 file-based routing (`/` and `/dashboard`)
 - Tailwind 4 with OKLCH design tokens in `index.css`
-- Fontsource fonts: Playfair Display, Source Sans 3, Geist Mono + Space Grotesk, Space Mono (Nothing style)
-- Hugeicons + `<Icon />` wrapper, `<Spinner />` wrapper (unicode-animations) in `Shared/`
-- `cn()` utility (clsx + tailwind-merge)
+- Fontsource fonts: Source Sans 3 (body), Geist Mono (numbers/labels), Playfair Display (reserved)
+- Hugeicons + `<Icon />` wrapper in `Shared/`
 - Screaming architecture folders: `/Dashboard`, `/Landing`, `/Auth`, `/Shared`
 
 ### Convex backend
@@ -31,10 +30,13 @@
 - Dashboard: redirects to `/` if unauthenticated
 
 ### Landing page
-- Nothing design system: Space Grotesk + Space Mono, monochrome + single red accent
-- Single viewport, no scroll
-- Hero headline + subtitle + Google sign-in CTA
-- Demo product card showing before/after price comparison with verdict badge
+- Monochrome + single red accent, Source Sans 3 + Geist Mono
+- Single viewport, no scroll (`h-[100dvh]`)
+- Hero headline ("Descuento o verso?") with accent-colored "verso?"
+- Mobile: compact demo card above the fold, centered stacked layout
+- Desktop: side-by-side copy + full demo card
+- Sign-in error feedback with auto-clear
+- Full WCAG focus-visible indicators, semantic HTML, aria-labels
 
 ### Dashboard
 - Grid layout with product cards
@@ -46,7 +48,7 @@
 - Three card states: pending (skeleton shimmer), error (real error message from scraper), scraped (prices + verdict)
 - Empty state ("SIN PRODUCTOS")
 - Delayed loading skeleton (300ms grace period to avoid flash on fast responses)
-- Fade-in animation on cards (Nothing-spec easing)
+- Fade-in animation on cards (respects prefers-reduced-motion)
 - Pending cards pinned to top of grid until data arrives
 - Background Playwright price verification — async pass after structured data scrape, excludes installments and pre-tax amounts
 - Equal height product cards across all states
@@ -62,8 +64,21 @@
 - `mercadolibre.ts` module prepared for future ML API integration
 - Argentine price format parsing (thousands dots, decimal commas)
 - Domain-level selector cache in Convex (`selectorsCache` table) — shared across all users
+- Auth middleware: shared secret (`SCRAPER_SECRET`) between Convex and Railway, origin validation
+- Error messages sanitized — no internal details leak to users
 - Deployed on Railway (Railpack builder, root directory: `apps/scraper`)
-- Env vars: `ANTHROPIC_API_KEY`, `MELI_CLIENT_ID`, `MELI_CLIENT_SECRET` on Railway; `SCRAPER_URL` on Convex
+- Env vars: `ANTHROPIC_API_KEY`, `MELI_CLIENT_ID`, `MELI_CLIENT_SECRET`, `SCRAPER_SECRET` on Railway; `SCRAPER_URL`, `SCRAPER_SECRET` on Convex
+
+### Security
+- CORS + shared secret auth on scraper endpoints
+- Rate limiting: max 10 products per user per minute
+- SSRF protection: blocks private IPs, localhost, non-HTTP(S) schemes
+- All Convex mutations verify auth via `getAuthUserId`
+- Product ownership verified on delete
+- Sensitive functions use `internalMutation`/`internalQuery`
+- Error messages sanitized in Spanish, no internal details leaked
+- All external links have `rel="noopener noreferrer"`
+- `prefers-reduced-motion` respected for animations
 
 ### Tested ecommerce sites
 - **Fravega** — works via `__NEXT_DATA__` structured data

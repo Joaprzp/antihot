@@ -70,10 +70,38 @@ export const add = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
+    // Rate limit: max 10 products per user per minute
+    const oneMinuteAgo = Date.now() - 60_000;
+    const recentProducts = await ctx.db
+      .query("products")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .order("desc")
+      .take(10);
+    const recentCount = recentProducts.filter(
+      (p) => p._creationTime > oneMinuteAgo,
+    ).length;
+    if (recentCount >= 10) {
+      throw new Error("Demasiados productos agregados. Esperá un momento.");
+    }
+
+    // Validate URL
     let store = "";
     try {
-      store = new URL(args.url).hostname.replace("www.", "");
-    } catch {
+      const parsed = new URL(args.url);
+      if (!["http:", "https:"].includes(parsed.protocol)) {
+        throw new Error("Solo URLs HTTP/HTTPS");
+      }
+      const hostname = parsed.hostname;
+      if (
+        /^(127\.|localhost|0\.0\.0\.0|169\.254|192\.168|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|::1|fc00:|fe80:)/.test(
+          hostname,
+        )
+      ) {
+        throw new Error("URL no permitida");
+      }
+      store = hostname.replace("www.", "");
+    } catch (e) {
+      if (e instanceof Error && e.message !== "URL inválida") throw e;
       throw new Error("URL inválida");
     }
 

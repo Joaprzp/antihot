@@ -30,17 +30,16 @@ antihot/
 │           ├── Dashboard/
 │           ├── Landing/
 │           ├── Auth/
-│           └── Shared/   # cn(), Icon wrapper, shared UI
+│           └── Shared/   # Icon wrapper
 ├── packages/
-│   └── shared/           # Shared types between web and scraper
+│   └── shared/           # Shared types (placeholder, not yet used)
 └── apps/scraper/         # Scraper service — Hono + Playwright + Claude
-    ├── src/
-    ├── src/
-    │   ├── index.ts         # Hono server (POST /scrape, GET /health)
-    │   ├── scrape.ts        # Extraction orchestration (structured data → Playwright → Haiku)
-    │   ├── extract.ts       # Claude Haiku selector extraction
-    │   └── mercadolibre.ts  # ML API client (prepared, not yet usable — requires user OAuth)
-    └── Dockerfile
+    └── src/
+        ├── index.ts         # Hono server (POST /scrape, GET /health) + auth middleware
+        ├── scrape.ts        # Extraction orchestration (structured data → Playwright → Haiku)
+        ├── extract.ts       # Claude Haiku selector extraction
+        ├── verify.ts        # Background Playwright price verification
+        └── mercadolibre.ts  # ML URL detection (API client prepared, not yet usable)
 ```
 
 > **Convex guidelines:** See [`apps/web/CLAUDE.md`](apps/web/CLAUDE.md) — always read `convex/_generated/ai/guidelines.md` before writing Convex code.
@@ -92,26 +91,23 @@ At 3,000 users × 5 products = 15,000 products on HotSale night:
 
 ### Styling
 - **Tailwind 4** with **OKLCH** for all custom colors. Never hex or HSL.
-- **Global design tokens** defined in `index.css` via `@theme inline` — `accent`, `surface`, `surface-raised`, `text-primary`, `text-secondary`, `text-muted`, `border`, `green`, `red`, `neutral` (with `-light` variants). Use these everywhere.
-- **Accent color** — burnt red `oklch(0.55 0.22 27)`.
-- **Landing page** — single viewport, no scroll (`h-screen overflow-hidden`). Always light theme.
+- **Global design tokens** defined in `index.css` via `@theme inline` — `accent`, `accent-hover`, `surface`, `surface-raised`, `black`, `text-primary`, `text-secondary`, `text-muted`, `border`, `border-visible`, `green`, `green-light`. Use these everywhere — never hard-code hex.
+- **Accent color** — burnt red `oklch(0.5 0.2 25)`.
+- **Landing page** — single viewport, no scroll (`h-[100dvh] overflow-hidden`). Always light theme.
 - **One accent color per view**.
-- **CVA** for component variants. **`cn()`** (clsx + tailwind-merge) for conditional classes.
 
 ### Components & icons
-- **Radix UI** for interactive primitives (dialogs, popovers, tooltips, dropdowns). No component library — build purpose-built components.
 - **Hugeicons** (`@hugeicons/react` + `@hugeicons/core-free-icons`). Always use the project's `<Icon />` wrapper from `@/Shared/Icon`, never `<HugeiconsIcon>` directly in feature code.
 
 ### Fonts
 - Loaded via **Fontsource** with **Latin Extended** subset.
-- **Source Sans 3** (`font-body`) — body text, product titles, UI text. Used across landing and dashboard.
+- **Source Sans 3** (`font-body`) — body text, product titles, UI text.
 - **Geist Mono** (`font-mono`) — prices, numbers, ALL CAPS labels, buttons, metadata.
 - **Playfair Display** (`font-heading`) — available but currently unused. Reserved for future editorial/display use.
-- Space Grotesk + Space Mono (`font-nothing`, `font-nothing-mono`) — installed but no longer active. Were used during Nothing design system phase.
 
 ### State management
-- **Zustand** for global app state (auth session, current user).
-- **TanStack Router search params + Zod** for all URL-driven state (filters, pagination, tabs). Not Zustand.
+- **TanStack Router search params + Zod** for all URL-driven state (filters, pagination, tabs).
+- **Convex `useQuery`/`useMutation`** for server state. No client state library needed.
 
 ### Localization
 - Timezone: `America/Argentina/Buenos_Aires` (GMT-3). Store UTC in Convex, display in GMT-3.

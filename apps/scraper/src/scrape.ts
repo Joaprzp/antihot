@@ -2,7 +2,7 @@ import { chromium } from "playwright-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import type { Page } from "playwright";
 import { extractSelectors } from "./extract";
-import { isMercadoLibreUrl, scrapeFromMeliApi } from "./mercadolibre";
+import { isMercadoLibreUrl } from "./mercadolibre";
 
 chromium.use(StealthPlugin());
 

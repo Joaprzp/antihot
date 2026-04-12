@@ -36,16 +36,14 @@ export async function extractSelectors(html: string): Promise<Selectors> {
     /\{[^{}]*"price"[^{}]*"title"[^{}]*\}|\{[^{}]*"title"[^{}]*"price"[^{}]*\}/,
   );
   if (!jsonMatches) {
-    throw new Error(
-      `Failed to parse selector JSON from Claude. Response: ${text.slice(0, 200)}`,
-    );
+    console.error("Claude response did not contain valid selectors:", text.slice(0, 200));
+    throw new Error("No se pudieron extraer selectores de la página");
   }
 
   const parsed = JSON.parse(jsonMatches[0]) as Selectors;
   if (!parsed.price || !parsed.title) {
-    throw new Error(
-      `Missing price or title in Claude response: ${jsonMatches[0]}`,
-    );
+    console.error("Claude returned incomplete selectors:", jsonMatches[0]);
+    throw new Error("No se pudieron extraer selectores de la página");
   }
 
   return parsed;

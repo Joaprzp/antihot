@@ -12,6 +12,15 @@
   animation: fade-in 250ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in {
+    animation: none;
+  }
+  .animate-pulse {
+    animation: none;
+  }
+}
+
 @theme inline {
   --font-heading: "Playfair Display Variable", serif;
   --font-body: "Source Sans 3 Variable", sans-serif;

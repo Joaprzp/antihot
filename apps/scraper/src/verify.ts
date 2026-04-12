@@ -3,6 +3,10 @@ import StealthPlugin from "puppeteer-extra-plugin-stealth";
 
 chromium.use(StealthPlugin());
 
+// A verified price must be at least this % of the known price to be considered real
+// Anything below is likely an installment amount, shipping cost, etc.
+const MIN_PRICE_RATIO = 0.5;
+
 export async function verifyPrice(
   url: string,
   knownPrice: number,
@@ -47,62 +51,95 @@ export async function verifyPrice(
     }
     await page.waitForTimeout(500);
 
-    // Look for the lowest visible price on the page
-    const lowestPrice = await page.evaluate(() => {
-      const pricePatterns = [
-        // Common discount/final price selectors
-        '[class*="discount" i]',
-        '[class*="best" i]',
-        '[class*="final" i]',
-        '[class*="selling" i]',
-        '[class*="offer" i]',
-        '[class*="promo" i]',
-        '[class*="price" i]',
-        '[class*="precio" i]',
-        '[data-testid*="price" i]',
-        // Generic price-like elements
-        '[itemprop="price"]',
-        '[itemprop="lowPrice"]',
-        'meta[property="product:price:amount"]',
-      ];
+    // Look for the lowest visible product price on the page
+    const priceFloor = knownPrice * MIN_PRICE_RATIO;
+    const lowestPrice = await page.evaluate(
+      ({ floor }) => {
+        // Selectors for elements that contain installment/cuota info — skip these
+        const excludePatterns = [
+          '[class*="installment" i]',
+          '[class*="cuota" i]',
+          '[class*="quota" i]',
+          '[class*="payment" i]',
+          '[class*="pago" i]',
+          '[class*="financing" i]',
+          '[class*="financiacion" i]',
+        ];
 
-      const prices: number[] = [];
+        function isInsideExcluded(el: Element): boolean {
+          for (const pattern of excludePatterns) {
+            if (el.closest(pattern)) return true;
+          }
+          // Also check text context — skip if near "cuota" or "x" multiplier
+          const parent = el.parentElement;
+          if (parent) {
+            const parentText = parent.textContent?.toLowerCase() ?? "";
+            if (
+              parentText.includes("cuota") ||
+              parentText.includes("x $") ||
+              parentText.includes("por mes")
+            ) {
+              return true;
+            }
+          }
+          return false;
+        }
 
-      // Check meta tags first
-      const metaPrice = document.querySelector(
-        'meta[property="product:price:amount"]',
-      );
-      if (metaPrice) {
-        const val = parseFloat(metaPrice.getAttribute("content") ?? "");
-        if (val > 0) prices.push(val);
-      }
+        const pricePatterns = [
+          '[class*="discount" i]',
+          '[class*="best" i]',
+          '[class*="final" i]',
+          '[class*="selling" i]',
+          '[class*="offer" i]',
+          '[class*="promo" i]',
+          '[class*="price" i]',
+          '[class*="precio" i]',
+          '[data-testid*="price" i]',
+          '[itemprop="price"]',
+          '[itemprop="lowPrice"]',
+          'meta[property="product:price:amount"]',
+        ];
 
-      // Check itemprop
-      const itemPrice = document.querySelector('[itemprop="price"]');
-      if (itemPrice) {
-        const val = parseFloat(itemPrice.getAttribute("content") ?? "");
-        if (val > 0) prices.push(val);
-      }
+        const prices: number[] = [];
 
-      // Check visible text elements
-      for (const selector of pricePatterns) {
-        const els = document.querySelectorAll(selector);
-        for (const el of els) {
-          const text = el.textContent ?? "";
-          // Match Argentine price: $ followed by digits with dots/commas
-          const match = text.match(/\$\s*([\d.]+(?:,\d+)?)/);
-          if (match) {
-            const cleaned = match[1]
-              .replace(/\.(?=\d{3})/g, "")
-              .replace(",", ".");
-            const val = parseFloat(cleaned);
-            if (val > 100) prices.push(val); // filter out tiny numbers (installment counts, etc.)
+        // Check meta tags
+        const metaPrice = document.querySelector(
+          'meta[property="product:price:amount"]',
+        );
+        if (metaPrice) {
+          const val = parseFloat(metaPrice.getAttribute("content") ?? "");
+          if (val > floor) prices.push(val);
+        }
+
+        // Check itemprop
+        const itemPrice = document.querySelector('[itemprop="price"]');
+        if (itemPrice) {
+          const val = parseFloat(itemPrice.getAttribute("content") ?? "");
+          if (val > floor) prices.push(val);
+        }
+
+        // Check visible text elements
+        for (const selector of pricePatterns) {
+          const els = document.querySelectorAll(selector);
+          for (const el of els) {
+            if (isInsideExcluded(el)) continue;
+
+            const text = el.textContent ?? "";
+            const match = text.match(/\$\s*([\d.]+(?:,\d+)?)/);
+            if (match) {
+              const cleaned = match[1]
+                .replace(/\.(?=\d{3})/g, "")
+                .replace(",", ".");
+              const val = parseFloat(cleaned);
+              if (val > floor) prices.push(val);
+            }
           }
         }
-      }
 
-      return prices.length > 0 ? Math.min(...prices) : null;
-    });
+        return prices.length > 0 ? Math.min(...prices) : null;
+      },
+      { floor: priceFloor },
+    );
 
     if (lowestPrice && lowestPrice < knownPrice) {
       console.log(

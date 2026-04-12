@@ -141,7 +141,21 @@ export function Dashboard() {
       {/* Nav */}
       <nav>
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
-          <p className="text-[15px] font-medium text-[#000000]">AntiHot</p>
+          <div className="flex items-center gap-3">
+            <p className="text-[15px] font-medium text-[#000000]">AntiHot</p>
+            <a
+              href="https://cafecito.app/casilisto"
+              rel="noopener"
+              target="_blank"
+            >
+              <img
+                srcSet="https://cdn.cafecito.app/imgs/buttons/button_5.png 1x, https://cdn.cafecito.app/imgs/buttons/button_5_2x.png 2x, https://cdn.cafecito.app/imgs/buttons/button_5_3.75x.png 3.75x"
+                src="https://cdn.cafecito.app/imgs/buttons/button_5.png"
+                alt="Invitame un café en cafecito.app"
+                className="h-6"
+              />
+            </a>
+          </div>
           <div className="flex items-center gap-4">
             <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
               {productCount} {productCount === 1 ? "PRODUCTO" : "PRODUCTOS"}

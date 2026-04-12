@@ -65,9 +65,19 @@ export function Landing() {
 
       {/* Footer */}
       <footer className="shrink-0 px-6 pb-5">
-        <p className="text-center font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
-          HECHO CON ❤️
-        </p>
+        <div className="flex items-center justify-center gap-2">
+          <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+            HECHO CON ❤️
+          </p>
+          <a href="https://cafecito.app/casilisto" rel="noopener" target="_blank">
+            <img
+              srcSet="https://cdn.cafecito.app/imgs/buttons/button_5.png 1x, https://cdn.cafecito.app/imgs/buttons/button_5_2x.png 2x, https://cdn.cafecito.app/imgs/buttons/button_5_3.75x.png 3.75x"
+              src="https://cdn.cafecito.app/imgs/buttons/button_5.png"
+              alt="Invitame un café en cafecito.app"
+              className="h-5"
+            />
+          </a>
+        </div>
       </footer>
     </div>
   );

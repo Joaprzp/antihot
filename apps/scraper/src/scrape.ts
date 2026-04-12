@@ -28,6 +28,16 @@ function parsePrice(text: string): number {
   return price;
 }
 
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'");
+}
+
 function findProductInObject(
   obj: unknown,
 ): { title: string; price: number } | null {
@@ -48,7 +58,7 @@ function findProductInObject(
         String((offer as Record<string, unknown>).price ?? (offer as Record<string, unknown>).lowPrice),
       );
       if (price > 0) {
-        return { title: String(record.name), price };
+        return { title: decodeHtmlEntities(String(record.name)), price };
       }
     }
   }
@@ -106,7 +116,7 @@ function extractStructuredDataFromHtml(
   if (inlineMatch) {
     const price = parseFloat(inlineMatch[2]);
     if (price > 0) {
-      return { title: inlineMatch[1], price };
+      return { title: decodeHtmlEntities(inlineMatch[1]), price };
     }
   }
 

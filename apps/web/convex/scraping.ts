@@ -82,10 +82,12 @@ export const updateSnapshotPrice = internalMutation({
 export const markScrapeError = internalMutation({
   args: {
     productId: v.id("products"),
+    errorMessage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.productId, {
       status: "error" as const,
+      errorMessage: args.errorMessage,
     });
   },
 });

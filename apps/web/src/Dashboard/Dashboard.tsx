@@ -2,10 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useQuery, useMutation } from "convex/react";
 import { useConvexAuth } from "convex/react";
+import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "../../convex/_generated/api";
 import { Icon } from "@/Shared/Icon";
 import { Spinner } from "@/Shared/Spinner";
-import { Link01Icon } from "@hugeicons/core-free-icons";
+import { Link01Icon, Delete02Icon } from "@hugeicons/core-free-icons";
+import type { Id } from "../../convex/_generated/dataModel";
 
 function useDelayedLoading(isLoading: boolean, delayMs = 300) {
   const [show, setShow] = useState(false);
@@ -67,6 +69,7 @@ function getDelta(before: number, after: number) {
 
 export function Dashboard() {
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
+  const { signOut } = useAuthActions();
   const navigate = useNavigate({ from: "/dashboard" });
   const { sort: sortField, order: sortOrder } = useSearch({
     from: "/dashboard",
@@ -75,7 +78,12 @@ export function Dashboard() {
     api.products.list,
     isAuthenticated ? {} : "skip",
   );
+  const user = useQuery(
+    api.products.currentUser,
+    isAuthenticated ? {} : "skip",
+  );
   const addProduct = useMutation(api.products.add);
+  const removeProduct = useMutation(api.products.remove);
   const [url, setUrl] = useState("");
   const [adding, setAdding] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -167,11 +175,25 @@ export function Dashboard() {
             <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
               {productCount} {productCount === 1 ? "PRODUCTO" : "PRODUCTOS"}
             </p>
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#000000]">
-              <span className="font-nothing-mono text-[11px] font-bold text-[#F5F5F5]">
-                JP
-              </span>
-            </div>
+            {user?.pictureUrl ? (
+              <img
+                src={user.pictureUrl}
+                alt={user.name ?? ""}
+                className="h-8 w-8 rounded-full"
+              />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#000000]">
+                <span className="font-nothing-mono text-[11px] font-bold text-[#F5F5F5]">
+                  {(user?.name ?? "?").slice(0, 2).toUpperCase()}
+                </span>
+              </div>
+            )}
+            <button
+              onClick={() => void signOut().then(() => navigate({ to: "/" }))}
+              className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999] transition-colors hover:text-[#000000]"
+            >
+              Salir
+            </button>
           </div>
         </div>
       </nav>
@@ -259,7 +281,12 @@ export function Dashboard() {
                 key={product._id}
                 className="animate-fade-in"
               >
-                <ProductCard product={product} />
+                <ProductCard
+                  product={product}
+                  onDelete={() =>
+                    removeProduct({ productId: product._id as Id<"products"> })
+                  }
+                />
               </div>
             ))}
           </div>
@@ -302,6 +329,7 @@ type Product = {
   url: string;
   store: string;
   title?: string;
+  errorMessage?: string;
   status: "pending" | "scraped" | "error";
   priceBefore: number | null;
   priceHotsale: number | null;
@@ -309,7 +337,13 @@ type Product = {
   dateHotsale: number | null;
 };
 
-function ProductCard({ product }: { product: Product }) {
+function ProductCard({
+  product,
+  onDelete,
+}: {
+  product: Product;
+  onDelete: () => void;
+}) {
   const hasBothPrices =
     product.priceBefore !== null && product.priceHotsale !== null;
   const delta = hasBothPrices
@@ -344,14 +378,22 @@ function ProductCard({ product }: { product: Product }) {
             <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
               {product.store}
             </p>
-            <a
-              href={product.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999] transition-colors hover:text-[#000000]"
-            >
-              Ver página
-            </a>
+            <div className="flex items-center gap-2">
+              <a
+                href={product.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999] transition-colors hover:text-[#000000]"
+              >
+                Ver página
+              </a>
+              <button
+                onClick={onDelete}
+                className="text-[#999999] transition-colors hover:text-[#D71921]"
+              >
+                <Icon icon={Delete02Icon} size={14} />
+              </button>
+            </div>
           </div>
           <p className="mt-1.5 text-[15px] font-medium leading-snug text-[#1A1A1A]">
             {product.title ?? "Producto"}
@@ -359,7 +401,7 @@ function ProductCard({ product }: { product: Product }) {
         </div>
         <div className="flex-1 px-5 py-4">
           <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#D71921]">
-            ERROR: NO SE PUDO LEER
+            {product.errorMessage ?? "ERROR: NO SE PUDO LEER"}
           </p>
         </div>
       </div>

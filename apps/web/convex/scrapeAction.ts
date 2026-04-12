@@ -39,7 +39,10 @@ export const scrapeProduct = internalAction({
       });
 
       if (!response.ok) {
-        throw new Error(`Scraper returned ${response.status}`);
+        const errorBody = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        throw new Error(errorBody?.error ?? `Scraper returned ${response.status}`);
       }
 
       const result = (await response.json()) as {
@@ -82,8 +85,11 @@ export const scrapeProduct = internalAction({
       }
     } catch (error) {
       console.error("Scrape failed:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Error desconocido";
       await ctx.runMutation(internal.scraping.markScrapeError, {
         productId: args.productId,
+        errorMessage,
       });
     }
   },

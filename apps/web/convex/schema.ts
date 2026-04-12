@@ -10,6 +10,7 @@ export default defineSchema({
     url: v.string(),
     store: v.string(),
     title: v.optional(v.string()),
+    errorMessage: v.optional(v.string()),
     status: v.union(
       v.literal("pending"),
       v.literal("scraped"),

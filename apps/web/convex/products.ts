@@ -38,6 +38,19 @@ export const list = query({
   },
 });
 
+export const currentUser = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+    return {
+      name: identity.name ?? null,
+      email: identity.email ?? null,
+      pictureUrl: identity.pictureUrl ?? null,
+    };
+  },
+});
+
 export const add = mutation({
   args: {
     url: v.string(),
@@ -61,7 +74,6 @@ export const add = mutation({
       status: "pending",
     });
 
-    // Schedule scraping in background
     await ctx.scheduler.runAfter(0, internal.scrapeAction.scrapeProduct, {
       productId,
       url: args.url,
@@ -70,5 +82,32 @@ export const add = mutation({
     });
 
     return productId;
+  },
+});
+
+export const remove = mutation({
+  args: {
+    productId: v.id("products"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const product = await ctx.db.get(args.productId);
+    if (!product || product.userId !== userId) {
+      throw new Error("Product not found");
+    }
+
+    // Delete associated snapshots
+    const snapshots = await ctx.db
+      .query("snapshots")
+      .withIndex("by_productId", (q) => q.eq("productId", args.productId))
+      .take(100);
+
+    for (const snapshot of snapshots) {
+      await ctx.db.delete(snapshot._id);
+    }
+
+    await ctx.db.delete(args.productId);
   },
 });

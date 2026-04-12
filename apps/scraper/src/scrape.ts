@@ -129,7 +129,18 @@ export async function scrape(
 
     const page = await context.newPage();
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
-    await page.waitForTimeout(1500);
+
+    // Wait for real content — try common product page signals
+    try {
+      await page.waitForSelector(
+        'h1, [data-testid="product-title"], .ui-pdp-title, script[type="application/ld+json"]',
+        { timeout: 10000 },
+      );
+    } catch {
+      // Timeout waiting for content — proceed with whatever loaded
+      console.log("Timed out waiting for product content signals");
+    }
+    await page.waitForTimeout(500);
 
     // Try JSON-LD from rendered page (some sites inject it via JS)
     const renderedHtml = await page.content();

@@ -28,35 +28,88 @@ function parsePrice(text: string): number {
   return price;
 }
 
-function extractJsonLdFromHtml(
+function findProductInObject(
+  obj: unknown,
+): { title: string; price: number } | null {
+  if (!obj || typeof obj !== "object") return null;
+
+  const record = obj as Record<string, unknown>;
+
+  // Check if this object is a Product with offers
+  if (record["@type"] === "Product" && record.name && record.offers) {
+    const offers = Array.isArray(record.offers)
+      ? record.offers
+      : [record.offers];
+    const offer = offers.find(
+      (o: Record<string, unknown>) => o.price || o.lowPrice,
+    );
+    if (offer) {
+      const price = parseFloat(
+        String((offer as Record<string, unknown>).price ?? (offer as Record<string, unknown>).lowPrice),
+      );
+      if (price > 0) {
+        return { title: String(record.name), price };
+      }
+    }
+  }
+
+  // Recurse into arrays and objects
+  if (Array.isArray(obj)) {
+    for (const item of obj) {
+      const result = findProductInObject(item);
+      if (result) return result;
+    }
+  } else {
+    for (const value of Object.values(record)) {
+      const result = findProductInObject(value);
+      if (result) return result;
+    }
+  }
+
+  return null;
+}
+
+function extractStructuredDataFromHtml(
   html: string,
 ): { title: string; price: number } | null {
-  const regex = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+  // 1. Standard JSON-LD script tags
+  const jsonLdRegex = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
   let match;
-  while ((match = regex.exec(html)) !== null) {
+  while ((match = jsonLdRegex.exec(html)) !== null) {
     try {
       const data = JSON.parse(match[1]);
-      const items = Array.isArray(data) ? data : [data];
-      for (const item of items) {
-        if (item["@type"] === "Product" && item.name && item.offers) {
-          const offers = Array.isArray(item.offers)
-            ? item.offers
-            : [item.offers];
-          const offer = offers.find(
-            (o: Record<string, unknown>) => o.price || o.lowPrice,
-          );
-          if (offer) {
-            const price = parseFloat(String(offer.price ?? offer.lowPrice));
-            if (price > 0) {
-              return { title: item.name, price };
-            }
-          }
-        }
-      }
+      const result = findProductInObject(data);
+      if (result) return result;
     } catch {
       continue;
     }
   }
+
+  // 2. Next.js __NEXT_DATA__ (Fravega, etc.)
+  const nextDataMatch = html.match(
+    /<script[^>]*id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i,
+  );
+  if (nextDataMatch) {
+    try {
+      const data = JSON.parse(nextDataMatch[1]);
+      const result = findProductInObject(data);
+      if (result) return result;
+    } catch {
+      // ignore parse errors
+    }
+  }
+
+  // 3. Inline JSON with offers pattern (fallback regex for embedded data)
+  const inlineMatch = html.match(
+    /"@type"\s*:\s*"Product"[\s\S]*?"name"\s*:\s*"([^"]+)"[\s\S]*?"offers"[\s\S]*?"price"\s*:\s*(\d+(?:\.\d+)?)/,
+  );
+  if (inlineMatch) {
+    const price = parseFloat(inlineMatch[2]);
+    if (price > 0) {
+      return { title: inlineMatch[1], price };
+    }
+  }
+
   return null;
 }
 
@@ -101,7 +154,7 @@ export async function scrape(
 
   // 1. Fast path: try plain HTTP fetch + JSON-LD (no Playwright needed)
   try {
-    console.log(`Trying fast JSON-LD extraction for ${url}`);
+    console.log(`Trying fast structured data extraction for ${url}`);
     const response = await fetch(url, {
       headers: {
         "User-Agent":
@@ -110,10 +163,10 @@ export async function scrape(
       },
     });
     const html = await response.text();
-    const jsonLdResult = extractJsonLdFromHtml(html);
+    const jsonLdResult = extractStructuredDataFromHtml(html);
     if (jsonLdResult) {
       console.log(
-        `Fast JSON-LD succeeded: "${jsonLdResult.title}" @ ${jsonLdResult.price}`,
+        `Fast structured data succeeded: "${jsonLdResult.title}" @ ${jsonLdResult.price}`,
       );
       return {
         ...jsonLdResult,
@@ -121,7 +174,7 @@ export async function scrape(
         selectorsSource: "jsonld",
       };
     }
-    console.log("No JSON-LD in static HTML, falling back to Playwright");
+    console.log("No structured data in static HTML, falling back to Playwright");
   } catch (error) {
     console.log("Fast fetch failed, falling back to Playwright:", error);
   }
@@ -172,10 +225,10 @@ export async function scrape(
 
     // Try JSON-LD from rendered page (some sites inject it via JS)
     const renderedHtml = await page.content();
-    const jsonLdResult = extractJsonLdFromHtml(renderedHtml);
+    const jsonLdResult = extractStructuredDataFromHtml(renderedHtml);
     if (jsonLdResult) {
       console.log(
-        `Playwright JSON-LD succeeded: "${jsonLdResult.title}" @ ${jsonLdResult.price}`,
+        `Playwright structured data succeeded: "${jsonLdResult.title}" @ ${jsonLdResult.price}`,
       );
       return {
         ...jsonLdResult,

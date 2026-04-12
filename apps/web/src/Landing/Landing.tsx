@@ -1,12 +1,13 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useConvexAuth } from "convex/react";
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export function Landing() {
   const { signIn } = useAuthActions();
   const { isAuthenticated, isLoading } = useConvexAuth();
   const navigate = useNavigate();
+  const [signingIn, setSigningIn] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -15,11 +16,11 @@ export function Landing() {
   }, [isAuthenticated, navigate]);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-[#F5F5F5] font-nothing">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#F5F5F5] font-body">
       {/* Nav */}
       <nav className="shrink-0 px-6 pt-5">
         <div className="flex items-center justify-center">
-          <p className="font-nothing-mono text-[11px] font-normal uppercase tracking-[0.08em] text-[#666666]">
+          <p className="font-mono text-[11px] font-normal uppercase tracking-[0.08em] text-[#666666]">
             HOTSALE EDICIÓN 2026
           </p>
         </div>
@@ -40,12 +41,15 @@ export function Landing() {
             </p>
             <div className="mt-10">
               <button
-                onClick={() => void signIn("google")}
-                disabled={isLoading}
-                className="font-nothing-mono inline-flex h-11 items-center gap-2.5 rounded-full bg-[#000000] px-6 text-[13px] uppercase tracking-[0.06em] text-[#F5F5F5] transition-colors duration-200 hover:bg-[#1A1A1A] disabled:opacity-40"
+                onClick={() => {
+                  setSigningIn(true);
+                  void signIn("google");
+                }}
+                disabled={isLoading || signingIn}
+                className="font-mono inline-flex h-11 items-center gap-2.5 rounded-full bg-[#000000] px-6 text-[13px] uppercase tracking-[0.06em] text-[#F5F5F5] transition-colors duration-200 hover:bg-[#1A1A1A] disabled:opacity-40"
               >
-                {isLoading ? (
-                  "CARGANDO..."
+                {isLoading || signingIn ? (
+                  "CONECTANDO..."
                 ) : (
                   <>
                     <GoogleIcon />
@@ -66,7 +70,7 @@ export function Landing() {
       {/* Footer */}
       <footer className="shrink-0 px-6 pb-5">
         <div className="flex items-center justify-center gap-2">
-          <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
             HECHO CON ❤️
           </p>
           <a href="https://cafecito.app/casilisto" rel="noopener" target="_blank">
@@ -88,7 +92,7 @@ function DemoCard() {
     <div className="w-full max-w-sm overflow-hidden rounded-xl border border-[#E8E8E8] bg-[#FFFFFF]">
       {/* Header */}
       <div className="border-b border-[#E8E8E8] px-5 py-4">
-        <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+        <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
           FRAVEGA.COM
         </p>
         <p className="mt-1.5 text-[15px] font-medium leading-snug text-[#1A1A1A]">
@@ -99,24 +103,24 @@ function DemoCard() {
       {/* Prices */}
       <div className="grid grid-cols-2 divide-x divide-[#E8E8E8]">
         <div className="px-5 py-4">
-          <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
             ANTES
           </p>
-          <p className="font-nothing-mono mt-2 text-[22px] font-bold tracking-[-0.02em] text-[#1A1A1A]">
+          <p className="font-mono mt-2 text-[22px] font-bold tracking-[-0.02em] text-[#1A1A1A]">
             $849.999
           </p>
-          <p className="font-nothing-mono mt-1 text-[11px] tracking-[0.08em] text-[#999999]">
+          <p className="font-mono mt-1 text-[11px] tracking-[0.08em] text-[#999999]">
             15/04/2026
           </p>
         </div>
         <div className="px-5 py-4">
-          <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
             HOTSALE
           </p>
-          <p className="font-nothing-mono mt-2 text-[22px] font-bold tracking-[-0.02em] text-[#1A1A1A]">
+          <p className="font-mono mt-2 text-[22px] font-bold tracking-[-0.02em] text-[#1A1A1A]">
             $899.999
           </p>
-          <p className="font-nothing-mono mt-1 text-[11px] tracking-[0.08em] text-[#999999]">
+          <p className="font-mono mt-1 text-[11px] tracking-[0.08em] text-[#999999]">
             12/05/2026
           </p>
         </div>
@@ -128,11 +132,11 @@ function DemoCard() {
           <p className="text-[15px] font-medium text-[#D71921]">
             Subió $50.000
           </p>
-          <p className="font-nothing-mono mt-0.5 text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+          <p className="font-mono mt-0.5 text-[11px] uppercase tracking-[0.08em] text-[#999999]">
             EL DESCUENTO ES CHAMUYO
           </p>
         </div>
-        <span className="font-nothing-mono rounded-full border border-[#D71921] px-3 py-1 text-[13px] font-bold tracking-[-0.02em] text-[#D71921]">
+        <span className="font-mono rounded-full border border-[#D71921] px-3 py-1 text-[13px] font-bold tracking-[-0.02em] text-[#D71921]">
           +5.9%
         </span>
       </div>

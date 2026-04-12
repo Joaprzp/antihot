@@ -43,10 +43,21 @@ export const currentUser = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
+
+    // Also check the users table for the image field (Convex Auth stores it there)
+    const userId = await getAuthUserId(ctx);
+    let image: string | null = null;
+    if (userId) {
+      const user = await ctx.db.get(userId);
+      if (user && "image" in user) {
+        image = (user.image as string) ?? null;
+      }
+    }
+
     return {
       name: identity.name ?? null,
       email: identity.email ?? null,
-      pictureUrl: identity.pictureUrl ?? null,
+      pictureUrl: identity.pictureUrl ?? image ?? null,
     };
   },
 });

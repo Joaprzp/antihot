@@ -104,9 +104,10 @@ At 3,000 users × 5 products = 15,000 products on HotSale night:
 
 ### Fonts
 - Loaded via **Fontsource** with **Latin Extended** subset.
-- **Playfair Display** — headings and landing display text only. Keep at large sizes.
-- **Source Sans 3** — body text.
-- **Geist Mono** — prices, numbers, fiscal data.
+- **Source Sans 3** (`font-body`) — body text, product titles, UI text. Used across landing and dashboard.
+- **Geist Mono** (`font-mono`) — prices, numbers, ALL CAPS labels, buttons, metadata.
+- **Playfair Display** (`font-heading`) — available but currently unused. Reserved for future editorial/display use.
+- Space Grotesk + Space Mono (`font-nothing`, `font-nothing-mono`) — installed but no longer active. Were used during Nothing design system phase.
 
 ### State management
 - **Zustand** for global app state (auth session, current user).

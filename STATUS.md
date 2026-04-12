@@ -37,17 +37,23 @@
 - Demo product card showing before/after price comparison with verdict badge
 
 ### Dashboard
-- Grid layout with product cards, each with "Ver página" link to original URL
-- Sticky URL input bar with Hugeicons link icon
+- Grid layout with product cards
+- "Ver página" link + delete button (trash icon) on each card header
+- Product titles truncated single-line with clickable `···` pill linking to original URL
+- Sticky URL input bar with Hugeicons link icon, shrinks on scroll (width + height + font animate down)
 - Sort controls (price/date, ASC/DESC) via TanStack Router search params + Zod
-- Three card states: pending (unicode braille spinner), error (inline `ERROR: NO SE PUDO LEER`), scraped (prices + verdict)
+- HotSale date info shown once above grid (not repeated per card)
+- Three card states: pending (skeleton shimmer), error (real error message from scraper), scraped (prices + verdict)
 - Empty state ("SIN PRODUCTOS")
 - Delayed loading skeleton (300ms grace period to avoid flash on fast responses)
-- Staggered fade-in animation on cards and skeletons (Nothing-spec easing)
-- Background Playwright price verification — async pass after structured data scrape checks for lower visible price (discount/promo), excludes installments and pre-tax amounts, silently updates snapshot if found
-- Equal height product cards across all states (pending, error, scraped)
-- Shrinking URL input bar on scroll (width + height animate down)
-- Cafecito donation button on landing footer and dashboard nav
+- Fade-in animation on cards (Nothing-spec easing)
+- Pending cards pinned to top of grid until data arrives
+- Background Playwright price verification — async pass after structured data scrape, excludes installments and pre-tax amounts
+- Equal height product cards across all states
+- Sign-out ("Salir") in nav
+- Google profile avatar (falls back to initials)
+- Cafecito donation button on landing and dashboard nav
+- Fonts: Source Sans 3 (body) + Geist Mono (labels/prices)
 
 ### Scraper service
 - `apps/scraper/` — Hono server with `POST /scrape` and `GET /health`
@@ -80,10 +86,8 @@
 - Scale target: 15,000 products (3,000 users × 5) in ~5 minutes
 
 ### Remaining UI work
-- User avatar: show real initials/photo from Google profile instead of hardcoded "JP"
-- Sign-out functionality
-- Delete product from dashboard
-- Error messages shown to user when scraping fails (currently silent)
+- Mobile responsive polish
+- Empty state improvements
 
 ### Deployment
 - Cloudflare Pages for frontend

@@ -5,7 +5,6 @@ import { useConvexAuth } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "../../convex/_generated/api";
 import { Icon } from "@/Shared/Icon";
-import { Spinner } from "@/Shared/Spinner";
 import { Link01Icon, Delete02Icon } from "@hugeicons/core-free-icons";
 import type { Id } from "../../convex/_generated/dataModel";
 
@@ -138,8 +137,8 @@ export function Dashboard() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F5F5F5] font-nothing">
-        <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+      <div className="flex min-h-screen items-center justify-center bg-[#F5F5F5] font-body">
+        <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
           CARGANDO...
         </p>
       </div>
@@ -152,7 +151,7 @@ export function Dashboard() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F5F5F5] font-nothing">
+    <div className="flex min-h-screen flex-col bg-[#F5F5F5] font-body">
       {/* Nav */}
       <nav>
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
@@ -172,7 +171,7 @@ export function Dashboard() {
             </a>
           </div>
           <div className="flex items-center gap-4">
-            <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+            <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
               {productCount} {productCount === 1 ? "PRODUCTO" : "PRODUCTOS"}
             </p>
             {user?.pictureUrl ? (
@@ -183,14 +182,14 @@ export function Dashboard() {
               />
             ) : (
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#000000]">
-                <span className="font-nothing-mono text-[11px] font-bold text-[#F5F5F5]">
+                <span className="font-mono text-[11px] font-bold text-[#F5F5F5]">
                   {(user?.name ?? "?").slice(0, 2).toUpperCase()}
                 </span>
               </div>
             )}
             <button
               onClick={() => void signOut().then(() => navigate({ to: "/" }))}
-              className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999] transition-colors hover:text-[#000000]"
+              className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999] transition-colors hover:text-[#000000]"
             >
               Salir
             </button>
@@ -225,7 +224,7 @@ export function Dashboard() {
           <button
             onClick={handleAdd}
             disabled={adding || !url.trim()}
-            className={`font-nothing-mono inline-flex items-center rounded-full bg-[#000000] uppercase tracking-[0.06em] text-[#F5F5F5] transition-all duration-200 hover:bg-[#1A1A1A] disabled:opacity-40 ${
+            className={`font-mono inline-flex items-center rounded-full bg-[#000000] uppercase tracking-[0.06em] text-[#F5F5F5] transition-all duration-200 hover:bg-[#1A1A1A] disabled:opacity-40 ${
               scrolled ? "h-8 px-4 text-[11px]" : "h-10 px-5 text-[12px]"
             }`}
           >
@@ -234,9 +233,10 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Sort controls */}
+      {/* HotSale date + Sort controls */}
       <div className="mx-auto w-full max-w-6xl px-6 pt-6 pb-2">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1">
           <SortButton
             label="PRECIO"
             active={sortField === "price"}
@@ -249,6 +249,10 @@ export function Dashboard() {
             order={sortField === "date" ? sortOrder : null}
             onClick={() => toggleSort("date")}
           />
+          </div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+            HotSale comienza el 11/05/2026
+          </p>
         </div>
       </div>
 
@@ -267,7 +271,7 @@ export function Dashboard() {
           </div>
         ) : sorted.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24">
-            <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+            <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
               SIN PRODUCTOS
             </p>
             <p className="mt-2 text-[15px] text-[#666666]">
@@ -311,7 +315,7 @@ function SortButton({
   return (
     <button
       onClick={onClick}
-      className={`font-nothing-mono inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-[0.08em] transition-colors ${
+      className={`font-mono inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-[0.08em] transition-colors ${
         active
           ? "bg-[#000000] text-[#F5F5F5]"
           : "text-[#999999] hover:text-[#666666]"
@@ -354,7 +358,7 @@ function ProductCard({
     return (
       <div className="flex h-full flex-col overflow-hidden rounded-xl border border-[#E8E8E8] bg-[#FFFFFF]">
         <div className="border-b border-[#E8E8E8] px-5 py-4">
-          <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
             {product.store}
           </p>
           <div className="mt-2 h-4 w-48 animate-pulse rounded bg-[#E8E8E8]" />
@@ -362,9 +366,6 @@ function ProductCard({
         <div className="flex-1 px-5 py-4">
           <div className="h-3 w-20 animate-pulse rounded bg-[#E8E8E8]" />
           <div className="mt-3 h-6 w-32 animate-pulse rounded bg-[#E8E8E8]" />
-          <p className="font-nothing-mono mt-3 text-[11px] tracking-[0.08em] text-[#999999]">
-            <Spinner name="braille" className="mr-1.5" />
-          </p>
         </div>
       </div>
     );
@@ -375,7 +376,7 @@ function ProductCard({
       <div className="flex h-full flex-col overflow-hidden rounded-xl border border-[#E8E8E8] bg-[#FFFFFF]">
         <div className="border-b border-[#E8E8E8] px-5 py-4">
           <div className="flex items-center justify-between">
-            <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+            <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
               {product.store}
             </p>
             <div className="flex items-center gap-2">
@@ -383,24 +384,32 @@ function ProductCard({
                 href={product.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999] transition-colors hover:text-[#000000]"
+                className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999] transition-colors hover:text-[#000000]"
               >
                 Ver página
               </a>
               <button
                 onClick={onDelete}
-                className="text-[#999999] transition-colors hover:text-[#D71921]"
+                className="text-[#CCCCCC] transition-colors hover:text-[#D71921]"
+                title="Eliminar producto"
               >
-                <Icon icon={Delete02Icon} size={14} />
+                <Icon icon={Delete02Icon} size={16} />
               </button>
             </div>
           </div>
-          <p className="mt-1.5 text-[15px] font-medium leading-snug text-[#1A1A1A]">
-            {product.title ?? "Producto"}
+          <p className="mt-1.5 flex items-center gap-1.5 text-[16px] font-semibold leading-snug text-[#1A1A1A]">
+            <span className="min-w-0 shrink overflow-hidden whitespace-nowrap" style={{ textOverflow: "clip" }}>
+              {product.title ?? "Producto"}
+            </span>
+            {(product.title?.length ?? 0) > 45 && (
+              <span className="shrink-0 rounded bg-[#E8E8E8] px-1.5 py-0.5 text-[10px] font-normal leading-none text-[#999999]">
+                ···
+              </span>
+            )}
           </p>
         </div>
         <div className="flex-1 px-5 py-4">
-          <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#D71921]">
+          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#D71921]">
             {product.errorMessage ?? "ERROR: NO SE PUDO LEER"}
           </p>
         </div>
@@ -413,20 +422,41 @@ function ProductCard({
       {/* Header */}
       <div className="border-b border-[#E8E8E8] px-5 py-4">
         <div className="flex items-center justify-between">
-          <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
             {product.store}
           </p>
-          <a
-            href={product.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999] transition-colors hover:text-[#000000]"
-          >
-            Ver página
-          </a>
+          <div className="flex items-center gap-2">
+            <a
+              href={product.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999] transition-colors hover:text-[#000000]"
+            >
+              Ver página
+            </a>
+            <button
+              onClick={onDelete}
+              className="text-[#CCCCCC] transition-colors hover:text-[#D71921]"
+              title="Eliminar producto"
+            >
+              <Icon icon={Delete02Icon} size={16} />
+            </button>
+          </div>
         </div>
-        <p className="mt-1.5 text-[15px] font-medium leading-snug text-[#1A1A1A]">
-          {product.title ?? "Producto"}
+        <p className="mt-1.5 flex items-center gap-1.5 text-[16px] font-semibold leading-snug text-[#1A1A1A]">
+          <span className="min-w-0 shrink overflow-hidden whitespace-nowrap" style={{ textOverflow: "clip" }}>
+            {product.title ?? "Producto"}
+          </span>
+          {(product.title?.length ?? 0) > 45 && (
+            <a
+              href={product.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 rounded bg-[#E8E8E8] px-1.5 py-0.5 text-[10px] font-normal leading-none text-[#999999] transition-colors hover:bg-[#CCCCCC]"
+            >
+              ···
+            </a>
+          )}
         </p>
       </div>
 
@@ -434,24 +464,24 @@ function ProductCard({
         <>
           <div className="grid grid-cols-2 divide-x divide-[#E8E8E8]">
             <div className="px-5 py-4">
-              <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+              <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
                 ANTES
               </p>
-              <p className="font-nothing-mono mt-2 text-[20px] font-bold tracking-[-0.02em] text-[#1A1A1A]">
+              <p className="font-mono mt-2 text-[20px] font-bold tracking-[-0.02em] text-[#1A1A1A]">
                 {formatPrice(product.priceBefore!)}
               </p>
-              <p className="font-nothing-mono mt-1 text-[11px] tracking-[0.08em] text-[#999999]">
+              <p className="font-mono mt-1 text-[11px] tracking-[0.08em] text-[#999999]">
                 {formatDate(product.dateBefore!)}
               </p>
             </div>
             <div className="px-5 py-4">
-              <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+              <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
                 HOTSALE
               </p>
-              <p className="font-nothing-mono mt-2 text-[20px] font-bold tracking-[-0.02em] text-[#1A1A1A]">
+              <p className="font-mono mt-2 text-[20px] font-bold tracking-[-0.02em] text-[#1A1A1A]">
                 {formatPrice(product.priceHotsale!)}
               </p>
-              <p className="font-nothing-mono mt-1 text-[11px] tracking-[0.08em] text-[#999999]">
+              <p className="font-mono mt-1 text-[11px] tracking-[0.08em] text-[#999999]">
                 {formatDate(product.dateHotsale!)}
               </p>
             </div>
@@ -469,7 +499,7 @@ function ProductCard({
               {delta!.label}
             </p>
             <span
-              className={`font-nothing-mono rounded-full border px-2.5 py-0.5 text-[12px] font-bold tracking-[-0.02em] ${
+              className={`font-mono rounded-full border px-2.5 py-0.5 text-[12px] font-bold tracking-[-0.02em] ${
                 delta!.type === "up"
                   ? "border-[#D71921] text-[#D71921]"
                   : delta!.type === "down"
@@ -483,24 +513,21 @@ function ProductCard({
         </>
       ) : (
         <div className="flex-1 px-5 py-4">
-          <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
             PRECIO REGISTRADO
           </p>
           {product.priceBefore !== null ? (
             <>
-              <p className="font-nothing-mono mt-2 text-[20px] font-bold tracking-[-0.02em] text-[#1A1A1A]">
+              <p className="font-mono mt-2 text-[20px] font-bold tracking-[-0.02em] text-[#1A1A1A]">
                 {formatPrice(product.priceBefore)}
               </p>
-              <p className="font-nothing-mono mt-1 text-[11px] tracking-[0.08em] text-[#999999]">
+              <p className="font-mono mt-1 text-[11px] tracking-[0.08em] text-[#999999]">
                 {formatDate(product.dateBefore!)}
               </p>
             </>
           ) : (
             <div className="mt-2 h-6 w-32 animate-pulse rounded bg-[#E8E8E8]" />
           )}
-          <p className="font-nothing-mono mt-3 text-[11px] uppercase tracking-[0.08em] text-[#999999]">
-            ESPERANDO HOTSALE...
-          </p>
         </div>
       )}
     </div>

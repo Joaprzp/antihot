@@ -16,7 +16,7 @@ export function Landing() {
     }
   }, [isLoading, isAuthenticated, navigate]);
 
-  async function handleStart() {
+  async function handleStartAnonymous() {
     if (isAuthenticated) {
       navigate({ to: "/dashboard" });
       return;
@@ -26,6 +26,15 @@ export function Landing() {
     try {
       await signIn("anonymous");
       navigate({ to: "/dashboard" });
+    } finally {
+      setSigningIn(false);
+    }
+  }
+
+  async function handleGoogleSignIn() {
+    setSigningIn(true);
+    try {
+      await signIn("google");
     } finally {
       setSigningIn(false);
     }
@@ -57,17 +66,21 @@ export function Landing() {
                 Nosotros lo revisamos el día del evento y te mostramos si el
                 descuento es posta.
               </p>
-              <div className="mt-8">
+              <div className="mt-8 flex flex-col items-center gap-3">
                 <button
-                  onClick={handleStart}
+                  onClick={handleStartAnonymous}
                   disabled={isLoading || signingIn}
-                  className="font-mono inline-flex h-11 min-w-[140px] items-center justify-center rounded-full bg-black px-6 text-[13px] uppercase tracking-[0.06em] text-surface transition-colors duration-200 hover:bg-text-primary focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-40"
+                  className="font-mono inline-flex h-11 w-full max-w-[220px] items-center justify-center rounded-full bg-black px-6 text-[12px] uppercase tracking-[0.06em] text-surface transition-colors duration-200 hover:bg-text-primary focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-40"
                 >
-                  {isLoading || signingIn ? "CONECTANDO..." : "EMPEZAR"}
+                  {signingIn ? "CONECTANDO..." : "EMPEZAR SIN CUENTA"}
                 </button>
-                <p className="mt-2 text-[13px] text-text-muted">
-                  No hace falta cuenta
-                </p>
+                <button
+                  onClick={handleGoogleSignIn}
+                  disabled={isLoading || signingIn}
+                  className="font-mono inline-flex h-11 w-full max-w-[220px] items-center justify-center rounded-full border border-black px-6 text-[12px] uppercase tracking-[0.06em] text-black transition-colors duration-200 hover:bg-black hover:text-surface focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-40"
+                >
+                  TENGO CUENTA
+                </button>
               </div>
             </div>
           </div>
@@ -83,17 +96,21 @@ export function Landing() {
                 Nosotros lo revisamos el día del evento y te mostramos si el
                 descuento es posta.
               </p>
-              <div className="mt-10">
+              <div className="mt-10 flex items-center gap-3">
                 <button
-                  onClick={handleStart}
+                  onClick={handleStartAnonymous}
                   disabled={isLoading || signingIn}
-                  className="font-mono inline-flex h-11 min-w-[140px] items-center justify-center rounded-full bg-black px-6 text-[13px] uppercase tracking-[0.06em] text-surface transition-colors duration-200 hover:bg-text-primary focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-40"
+                  className="font-mono inline-flex h-11 items-center justify-center rounded-full bg-black px-6 text-[12px] uppercase tracking-[0.06em] text-surface transition-colors duration-200 hover:bg-text-primary focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-40"
                 >
-                  {isLoading || signingIn ? "CONECTANDO..." : "EMPEZAR"}
+                  {signingIn ? "CONECTANDO..." : "EMPEZAR SIN CUENTA"}
                 </button>
-                <p className="mt-2 text-[13px] text-text-muted">
-                  No hace falta cuenta
-                </p>
+                <button
+                  onClick={handleGoogleSignIn}
+                  disabled={isLoading || signingIn}
+                  className="font-mono inline-flex h-11 items-center justify-center rounded-full border border-black px-6 text-[12px] uppercase tracking-[0.06em] text-black transition-colors duration-200 hover:bg-black hover:text-surface focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-40"
+                >
+                  TENGO CUENTA
+                </button>
               </div>
             </div>
             <div className="flex items-center justify-center">

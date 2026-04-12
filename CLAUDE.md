@@ -13,7 +13,7 @@ Frontend (Cloudflare Pages)          Backend (Convex)              Scraper (Rail
 React 19 + Vite 8 + TSR  ──────►  Convex functions + DB  ◄──────  Hono + Playwright + Claude API
 ```
 
-- **Frontend** — React 19, Vite 8, TanStack Router v1, Tailwind 4, Zustand, deployed on Cloudflare Pages.
+- **Frontend** — React 19, Vite 8, TanStack Router v1, Tailwind 4, deployed on Cloudflare Pages.
 - **Backend / DB** — Convex (functions, schema, crons, auth). Convex Auth with Google OAuth.
 - **Scraper service** — Hono server on Railway (Railpack). Extraction priority: 1) MercadoLibre API (not yet supported) 2) structured data from static HTML (JSON-LD, `__NEXT_DATA__`, inline Schema.org) 3) cached CSS selectors 4) Claude Haiku selector extraction. Playwright with stealth plugin for JS-rendered pages.
 - **Notifications** — Telegram Bot API (direct HTTP, HTML parse mode).

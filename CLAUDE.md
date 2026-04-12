@@ -9,13 +9,13 @@ A web app that tracks Argentine ecommerce product prices **before** and **during
 ## Architecture
 
 ```
-Frontend (Cloudflare Pages)          Backend (Convex)              Scraper (Railway, Docker)
+Frontend (Cloudflare Pages)          Backend (Convex)              Scraper (Railway, Railpack)
 React 19 + Vite 8 + TSR  ──────►  Convex functions + DB  ◄──────  Hono + Playwright + Claude API
 ```
 
 - **Frontend** — React 19, Vite 8, TanStack Router v1, Tailwind 4, Zustand, deployed on Cloudflare Pages.
 - **Backend / DB** — Convex (functions, schema, crons, auth). Convex Auth with Google OAuth.
-- **Scraper service** — Hono server on Railway. Playwright (Chromium headless) fetches pages. Claude Haiku extracts CSS selectors for price and title from raw HTML (cached per domain, shared across users). Auto-heals broken selectors by escalating to Claude Sonnet.
+- **Scraper service** — Hono server on Railway (Railpack). Extraction priority: 1) MercadoLibre API (not yet supported) 2) structured data from static HTML (JSON-LD, `__NEXT_DATA__`, inline Schema.org) 3) cached CSS selectors 4) Claude Haiku selector extraction. Playwright with stealth plugin for JS-rendered pages.
 - **Notifications** — Telegram Bot API (direct HTTP, HTML parse mode).
 
 ### Monorepo structure
@@ -33,7 +33,14 @@ antihot/
 │           └── Shared/   # cn(), Icon wrapper, shared UI
 ├── packages/
 │   └── shared/           # Shared types between web and scraper
-└── apps/scraper/         # Phase 2 — Hono + Playwright
+└── apps/scraper/         # Scraper service — Hono + Playwright + Claude
+    ├── src/
+    ├── src/
+    │   ├── index.ts         # Hono server (POST /scrape, GET /health)
+    │   ├── scrape.ts        # Extraction orchestration (structured data → Playwright → Haiku)
+    │   ├── extract.ts       # Claude Haiku selector extraction
+    │   └── mercadolibre.ts  # ML API client (prepared, not yet usable — requires user OAuth)
+    └── Dockerfile
 ```
 
 > **Convex guidelines:** See [`apps/web/CLAUDE.md`](apps/web/CLAUDE.md) — always read `convex/_generated/ai/guidelines.md` before writing Convex code.
@@ -41,19 +48,19 @@ antihot/
 ## User flow
 
 1. Sign in with Google (Convex Auth).
-2. Paste a product URL (MercadoLibre, Fravega, Naldo, etc.).
-3. Scraper checks domain selector cache → if miss, Playwright fetches HTML → Claude Haiku extracts selectors → cached per domain for all users.
-4. Selectors used to extract title + price → snapshot saved in Convex.
-5. Product appears in dashboard with name, price, date.
-6. Cron re-scrapes all products on HotSale night using cached selectors. If selector fails, escalate to Claude Sonnet (auto-heal) and update cache.
+2. Paste a product URL (Fravega, Cetrogar, Naldo, etc. — MercadoLibre not yet supported).
+3. Fast path: plain HTTP fetch → extract structured data (JSON-LD, `__NEXT_DATA__`, inline Schema.org). No Playwright or Claude needed for most sites.
+4. Slow path (if no structured data): Playwright (with stealth plugin) renders page → try cached CSS selectors → if miss, Claude Haiku extracts selectors → cached per domain for all users.
+5. Product appears in dashboard with name, price, date, and "Ver página" link.
+6. Cron re-scrapes all products on HotSale night.
 7. Dashboard shows delta: ✅ bajó / ⚠️ subió / ➖ igual.
 
-### Scraping cost model
+### Scraping extraction priority
 
-- **First scrape per domain:** 1 Haiku call (extract selectors, cache for all users on that domain).
-- **Subsequent scrapes (same domain):** 0 Claude calls (use cached selectors).
-- **Auto-healing (selector broke):** 1 Sonnet call (re-extract, update cache).
-- Cost scales by number of **unique stores**, not by number of users or products.
+1. **Structured data** (JSON-LD `<script>` tags, Next.js `__NEXT_DATA__`, inline `@type:Product` patterns) — free, fast, no Playwright.
+2. **Cached CSS selectors** — from `selectorsCache` table, keyed by domain.
+3. **Claude Haiku** (`claude-haiku-4-5-20251001`) — extracts selectors from rendered HTML. Cached per domain for all users.
+4. Cost scales by number of **unique stores without structured data**, not by users or products. Most ecommerce sites have structured data → zero Claude calls.
 
 ## Code conventions
 
@@ -108,7 +115,8 @@ antihot/
 
 ## Key risks to keep in mind
 
-- Scraper blocking → mitigate with realistic User-Agent and request delays.
-- Selector breakage → Haiku→Sonnet auto-healing escalation + domain cache update.
+- Scraper blocking → mitigate with stealth plugin, realistic User-Agent, and request delays.
+- Selector breakage → re-run Haiku extraction + update domain cache.
 - Cron failure on HotSale night = total loss of value for that cycle.
-- Domain cache assumes one selector pattern per store. MercadoLibre may need path-pattern keying if layouts vary by seller type.
+- **MercadoLibre not supported** — blocks headless browsers and API requires user-authorized OAuth. Documented as known limitation.
+- Domain cache assumes one selector pattern per store.

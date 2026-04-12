@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "convex/react";
 import { useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Icon } from "@/Shared/Icon";
+import { Spinner } from "@/Shared/Spinner";
 import { Link01Icon } from "@hugeicons/core-free-icons";
 
 function useDelayedLoading(isLoading: boolean, delayMs = 300) {
@@ -151,7 +152,7 @@ export function Dashboard() {
       </nav>
 
       {/* Input */}
-      <div className="sticky top-14 z-10 bg-[#F5F5F5]">
+      <div className="sticky top-14 z-10">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-6 py-3">
           <div className="flex flex-1 items-center rounded-full border border-[#E8E8E8] bg-[#FFFFFF] px-4 py-2.5 transition-colors focus-within:border-[#000000]">
             <Icon icon={Link01Icon} size={16} className="text-[#999999]" />
@@ -264,6 +265,7 @@ function SortButton({
 type Product = {
   _id: string;
   _creationTime: number;
+  url: string;
   store: string;
   title?: string;
   status: "pending" | "scraped" | "error";
@@ -292,8 +294,8 @@ function ProductCard({ product }: { product: Product }) {
         <div className="px-5 py-4">
           <div className="h-3 w-20 animate-pulse rounded bg-[#E8E8E8]" />
           <div className="mt-3 h-6 w-32 animate-pulse rounded bg-[#E8E8E8]" />
-          <p className="font-nothing-mono mt-3 text-[11px] uppercase tracking-[0.08em] text-[#999999]">
-            SCRAPEANDO...
+          <p className="font-nothing-mono mt-3 text-[11px] tracking-[0.08em] text-[#999999]">
+            <Spinner name="braille" className="mr-1.5" />
           </p>
         </div>
       </div>
@@ -324,9 +326,19 @@ function ProductCard({ product }: { product: Product }) {
     <div className="overflow-hidden rounded-xl border border-[#E8E8E8] bg-[#FFFFFF]">
       {/* Header */}
       <div className="border-b border-[#E8E8E8] px-5 py-4">
-        <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
-          {product.store}
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999]">
+            {product.store}
+          </p>
+          <a
+            href={product.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-nothing-mono text-[11px] uppercase tracking-[0.08em] text-[#999999] transition-colors hover:text-[#000000]"
+          >
+            Ver página
+          </a>
+        </div>
         <p className="mt-1.5 text-[15px] font-medium leading-snug text-[#1A1A1A]">
           {product.title ?? "Producto"}
         </p>

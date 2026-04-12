@@ -37,19 +37,22 @@ Cualquier consumidor argentino que compre en ecommerce durante el HotSale.
 
 ## Stack
 
-Bun + React 19 + Vite 8 + Convex + TanStack Router + Tailwind 4 + Radix UI. Scraping con Playwright en Railway VPS (Hono server, Docker), cron jobs en Convex scheduled functions. Claude Haiku via Anthropic API para extracción de selectores CSS (precio y título) desde el HTML crudo, con fallback a Claude Sonnet para auto-healing.
+Bun + React 19 + Vite 8 + Convex + TanStack Router + Tailwind 4 + Radix UI. Scraping con datos estructurados (JSON-LD, `__NEXT_DATA__`) como primera opción; Playwright + Claude Haiku via Anthropic API como fallback para sitios sin datos estructurados. Hono server en Railway (Railpack), cron jobs en Convex scheduled functions.
 
 ---
 
 ## Scraping — estrategia
 
-1. Playwright fetchea el HTML de la URL pegada por el usuario.
-2. Se busca en el cache de selectores por dominio. Si hay selectores cacheados para ese dominio, se usan directamente (sin llamada a Claude).
-3. Si no hay cache, se envía el HTML a Claude Haiku con el prompt: *"Identificá el selector CSS más estable para el precio del producto y para el título."*
-4. Se persisten los selectores en el cache a nivel dominio (un solo set de selectores por tienda, compartido entre todos los usuarios).
-5. En el re-scrape del HotSale se reutilizan los selectores cacheados. Si fallan, se escala a Claude Sonnet para auto-healing con el nuevo HTML y se actualiza el cache.
+1. Se intenta un fetch HTTP plano y se buscan datos estructurados: JSON-LD (`<script type="application/ld+json">`), Next.js `__NEXT_DATA__`, o patrones inline de Schema.org `@type:Product`. Esto cubre la mayoría de ecommerce argentinos (Fravega, Cetrogar, Naldo) sin necesidad de Playwright ni Claude.
+2. Si no hay datos estructurados, se lanza Playwright (con stealth plugin) para renderizar la página.
+3. Se busca en el cache de selectores CSS por dominio. Si hay selectores cacheados, se usan directamente.
+4. Si no hay cache, se envía el HTML a Claude Haiku para extraer selectores CSS estables para precio y título.
+5. Se persisten los selectores en el cache a nivel dominio (compartido entre todos los usuarios).
+6. En el re-scrape del HotSale se reutilizan los mismos caminos (datos estructurados → cache → Haiku).
 
-**Modelo de costos:** Haiku por defecto (~10x más barato que Sonnet). Sonnet solo como fallback para auto-healing. Con cache por dominio, el costo escala por cantidad de tiendas, no por cantidad de usuarios.
+**Modelo de costos:** La mayoría de las tiendas tienen datos estructurados → costo cero de Claude. Haiku solo se usa para sitios sin datos estructurados. El costo escala por cantidad de tiendas sin Schema.org, no por cantidad de usuarios.
+
+**Limitación conocida:** MercadoLibre no está soportado — bloquea browsers headless y su API requiere OAuth de usuario.
 
 ---
 

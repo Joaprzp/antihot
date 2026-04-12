@@ -226,16 +226,16 @@ export function Dashboard() {
       {/* Input */}
       <div className="sticky top-14 z-10">
         <div
-          className={`mx-auto flex items-center gap-2 px-4 transition-all duration-200 sm:gap-3 sm:px-6 ${
-            scrolled ? "py-3 sm:max-w-2xl sm:py-1.5" : "max-w-6xl py-3"
+          className={`mx-auto flex max-w-6xl items-center gap-2 px-5 py-3 transition-all duration-200 sm:gap-3 sm:px-6 ${
+            scrolled ? "sm:max-w-2xl sm:py-1.5" : ""
           }`}
         >
           <div
-            className={`flex flex-1 items-center rounded-full border border-border bg-surface-raised transition-all duration-200 focus-within:border-black ${
-              scrolled ? "px-4 py-2.5 sm:px-3 sm:py-1.5" : "px-4 py-2.5"
+            className={`flex flex-1 items-center rounded-full border border-border bg-surface-raised px-4 py-2.5 transition-all duration-200 focus-within:border-black ${
+              scrolled ? "sm:px-3 sm:py-1.5" : ""
             }`}
           >
-            <Icon icon={Link01Icon} size={scrolled ? 14 : 16} className="text-text-muted" />
+            <Icon icon={Link01Icon} size={16} className="text-text-muted" />
             <input
               type="text"
               value={url}
@@ -243,30 +243,28 @@ export function Dashboard() {
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
               placeholder="Pegá la URL del producto..."
               aria-label="URL del producto"
-              className={`ml-2.5 flex-1 bg-transparent text-text-primary outline-none transition-all duration-200 placeholder:text-text-muted ${
-                scrolled ? "text-[12px]" : "text-[14px]"
-              }`}
+              className="ml-2.5 flex-1 bg-transparent text-[14px] text-text-primary outline-none placeholder:text-text-muted"
             />
           </div>
           <button
             onClick={handleAdd}
             disabled={adding || !url.trim()}
-            className={`font-mono inline-flex items-center rounded-full bg-black uppercase tracking-[0.06em] text-surface transition-all duration-200 hover:bg-text-primary focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-40 ${
-              scrolled ? "h-10 px-5 text-[12px] sm:h-8 sm:px-4 sm:text-[11px]" : "h-10 px-5 text-[12px]"
+            className={`font-mono inline-flex h-10 items-center rounded-full bg-black px-5 text-[12px] uppercase tracking-[0.06em] text-surface transition-all duration-200 hover:bg-text-primary focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-40 ${
+              scrolled ? "sm:h-8 sm:px-4 sm:text-[11px]" : ""
             }`}
           >
             {adding ? "AGREGANDO..." : "AGREGAR"}
           </button>
         </div>
         {addError && (
-          <p className="mx-auto max-w-6xl px-4 pt-1 text-[13px] text-accent animate-fade-in sm:px-6">
+          <p className="mx-auto max-w-6xl px-5 pt-1 text-[13px] text-accent animate-fade-in sm:px-6">
             {addError}
           </p>
         )}
       </div>
 
       {/* HotSale date + Sort controls */}
-      <div className="mx-auto w-full max-w-6xl px-4 pt-6 pb-2 sm:px-6">
+      <div className="mx-auto w-full max-w-6xl px-5 pt-6 pb-2 sm:px-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-1" role="group" aria-label="Ordenar productos">
             <SortButton
@@ -289,9 +287,9 @@ export function Dashboard() {
       </div>
 
       {/* Product grid */}
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-2 pb-8 sm:px-6">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-5 pt-2 pb-8 sm:px-6">
         {isLoadingProducts ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {[0, 1, 2].map((i) => (
               <div key={i} className="min-w-0 animate-fade-in">
                 <SkeletonCard />
@@ -308,7 +306,7 @@ export function Dashboard() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {sorted.map((product) => (
               <div key={product._id} className="min-w-0 animate-fade-in">
                 <ProductCard

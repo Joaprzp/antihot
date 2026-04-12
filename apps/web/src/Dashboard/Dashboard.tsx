@@ -240,29 +240,31 @@ export function Dashboard() {
                 <span className="sm:hidden">Vincular</span>
               </button>
             )}
-            <button
-              onClick={() => void signOut().then(() => navigate({ to: "/" }))}
-              className="group flex items-center gap-2 rounded-full py-1 pl-1 pr-3 transition-colors hover:bg-border/50 focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
-            >
-              {user?.pictureUrl ? (
-                <img
-                  src={user.pictureUrl}
-                  alt={user.name ?? "Avatar"}
-                  width={28}
-                  height={28}
-                  className="h-7 w-7 rounded-full"
-                />
-              ) : (
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-black">
-                  <span className="font-mono text-[10px] font-bold text-surface">
-                    {(user?.name ?? "?").slice(0, 2).toUpperCase()}
-                  </span>
-                </div>
-              )}
-              <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted transition-colors group-hover:text-black">
-                Salir
-              </span>
-            </button>
+            {isAnonymous === false && (
+              <button
+                onClick={() => void signOut().then(() => navigate({ to: "/" }))}
+                className="group flex items-center gap-2 rounded-full py-1 pl-1 pr-3 transition-colors hover:bg-border/50 focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+              >
+                {user?.pictureUrl ? (
+                  <img
+                    src={user.pictureUrl}
+                    alt={user.name ?? "Avatar"}
+                    width={28}
+                    height={28}
+                    className="h-7 w-7 rounded-full"
+                  />
+                ) : (
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-black">
+                    <span className="font-mono text-[10px] font-bold text-surface">
+                      {(user?.name ?? "?").slice(0, 2).toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted transition-colors group-hover:text-black">
+                  Salir
+                </span>
+              </button>
+            )}
           </div>
         </div>
       </nav>
